@@ -1,0 +1,29 @@
+<nav search_view="search" color="#297ba5">
+    <view name="overview" label="overview" default='true'/>
+    <collection label="VMAX">
+        <view name="array_summary" label="VMAX Summary"/>
+        <view name="array_performance" label="VMAX Performance"/>
+    </collection>
+    <view name="srp_summary" label="SRP Summary"/>
+    <collection label="Storage Group">
+        <view name="sg_summary" label="SG Summary"/>
+        <view name="sg_performance" label="SG Performance"/>
+    </collection>
+    <collection label="Directors">
+        <view name="fe_dir_summary" label="FE Director"/>
+        <view name="be_dir_summary" label="BE Director"/>
+        <view name="rdf_dir_summary" label="RDF Director"/>
+        <view name="im_dir_summary" label="IM Director"/>
+        <view name="eds_dir_summary" label="EDS Director"/>
+    </collection>
+    <view name="port_summary" label="Ports"/>
+    <view name="port_group_summary" label="Port Groups"/>
+    <view name="host_summary" label="Hosts"/>
+    <view name="initiator_summary" label="Initiator Summary"/>
+    <collection label="Workload Planner">
+        <view name="wlp_compliance" label="WLP Compliance"/>
+        <view name="wlp_headroom" label="WLP Headroom"/>
+    </collection>
+    <view name="vmax_alerts" label="VMAX Alerts"/>
+    <view name="search" label="Search"/>
+</nav>

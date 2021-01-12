@@ -1,0 +1,201 @@
+<form>
+    <label>WLP Compliance</label>
+    <search id="vmax_recent_wlp_data">
+        <query>`vmax_wlp_compliance` array_id=$array_tok$
+            workload_name=$workload_tok$
+            | fields array_id, workload_name, percent_stable, percent_marginal,
+            percent_underperforming
+        </query>
+        <earliest>-15m@m</earliest>
+        <latest>now</latest>
+    </search>
+    <search id="vmax_wlp_24hr_data">
+        <query>`vmax_wlp_compliance` array_id=$array_tok$
+            workload_name=$workload_tok$
+            | fields array_id, workload_name, percent_stable, percent_marginal,
+            percent_underperforming
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+    <fieldset submitButton="false">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_array` | dedup array_id | table array_id | sort
+                    array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="workload_tok" searchWhenChanged="true">
+            <label>Workload Name</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_wlp_compliance` | dedup workload_name | table
+                    workload_name | sort workload_name
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>workload_name</fieldForLabel>
+            <fieldForValue>workload_name</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+    <row>
+        <panel>
+            <single>
+                <search base="vmax_recent_wlp_data">
+                    <query>| spath percent_stable | search percent_stable=100 |
+                        dedup array_id, workload_name | stats
+                        count(workload_name)
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0xd93f3c","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">100% Stable Workloads</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_wlp_compliance`
+                        array_id=* workload_name=* percent_stable=100 | dedup
+                        array_id,workload_name | sort array_id, workload_name |
+                        table array_id, workload_name, percent_stable,
+                        percent_marginal, percent_underperforming | rename
+                        array_id as "Array ID", workload_name as "Workload
+                        Name", percent_stable as "Percent Stable",
+                        percent_marginal as "Percent Marginal",
+                        percent_underperforming as "Percent Under-Performing"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_recent_wlp_data">
+                    <query>| spath percent_stable | search percent_stable&lt;100
+                        | dedup array_id, workload_name | stats
+                        count(workload_name)
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">Less than 100% Stable Workloads
+                </option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_blank">search?q=`vmax_wlp_compliance`
+                        array_id=* workload_name=* percent_stable&lt;100 |
+                        dedup array_id,workload_name | sort array_id,
+                        workload_name | table array_id, workload_name,
+                        percent_stable, percent_marginal,
+                        percent_underperforming | rename array_id as "Array
+                        ID", workload_name as "Workload Name", percent_stable
+                        as "Percent Stable", percent_marginal as "Percent
+                        Marginal", percent_underperforming as "Percent
+                        Under-Performing"&amp;earliest=$earliest$&amp;latest=$latest$
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>% Stable (less than 100% stable)</title>
+            <chart>
+                <search base="vmax_wlp_24hr_data">
+                    <query>
+                        | spath percent_stable | search percent_stable &lt; 100
+                        | timechart avg(percent_stable) by workload_name
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.text">% Stable</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.maximumNumber">100</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>% Marginal (more than 0% marginal)</title>
+            <chart>
+                <search base="vmax_wlp_24hr_data">
+                    <query>
+                        | spath percent_marginal | search percent_marginal &gt; 0
+                        | timechart avg(percent_marginal) by workload_name
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.text">% Marginal</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.maximumNumber">100</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>% Under-Performing (more than 0% under-performing)</title>
+            <chart>
+                <search base="vmax_wlp_24hr_data">
+                    <query>
+                        | spath percent_marginal | search percent_marginal &gt; 0
+                        | timechart avg(percent_underperforming) by
+                        workload_name usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.text">% Under-Performing
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.maximumNumber">100</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Workload Compliance Summary</title>
+            <table>
+                <search base="vmax_recent_wlp_data">
+                    <query>| table array_id, workload_name, percent_stable,
+                        percent_marginal, percent_underperforming | dedup
+                        array_id, workload_name
+                        | sort array_id, workload_name
+                        | rename array_id as "Array ID", workload_name as
+                        "Workload Name", percent_stable as "Percent
+                        Stable", percent_marginal as "Percent Marginal",
+                        percent_underperforming as "Percent
+                        Underperforming"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+                <option name="refresh.display">progressbar</option>
+            </table>
+        </panel>
+    </row>
+</form>

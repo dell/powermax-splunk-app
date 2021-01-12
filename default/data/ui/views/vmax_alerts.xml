@@ -1,0 +1,238 @@
+<form>
+    <label>Alerts</label>
+    <search id="vmax_alert_recent_data">
+        <query>`vmax_alert` u4v_source=$source_tok$ array_id=$array_tok$
+            state=$state_tok$ severity=$severity_tok$
+            | dedup array_id, alert_id | fields _time, created_date, array_id,
+            alert_id, created_date_milliseconds,
+            state, severity, description, u4v_source, host, asset_id, message
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="source_tok" searchWhenChanged="true">
+            <label>Unisphere Source</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_alert` | dedup u4v_source | table u4v_source |
+                    sort u4v_source
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>u4v_source</fieldForLabel>
+            <fieldForValue>u4v_source</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>VMAX ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_alert` u4v_source=$source_tok$
+                    | dedup array_id | table array_id | sort array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="state_tok" searchWhenChanged="true">
+            <label>State</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_alert` u4v_source=$source_tok$
+                    array_id=$array_tok$
+                    | dedup state | table state | sort state
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>state</fieldForLabel>
+            <fieldForValue>state</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="severity_tok" searchWhenChanged="true">
+            <label>Severity</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_alert` u4v_source=$source_tok$
+                    array_id=$array_tok$ state=$state_tok$
+                    | dedup severity | table severity | sort severity
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>severity</fieldForLabel>
+            <fieldForValue>severity</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+    <row>
+        <panel>
+            <single>
+                <search base="vmax_alert_recent_data">
+                    <query>spath severity | search severity=Info | stats
+                        count
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Info Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_alert_recent_data">
+                    <query>spath severity | search severity=Minor | stats
+                        count
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Minor Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_alert_recent_data">
+                    <query>spath severity | search severity=Normal | stats
+                        count
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Normal Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_alert_recent_data">
+                    <query>spath severity | search severity=Warning | stats
+                        count
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf58f39"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Warning Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_alert_recent_data">
+                    <query>spath severity | search severity=Critical | stats
+                        count
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Critical Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_alert_recent_data">
+                    <query>spath severity | search severity=FATAL | stats
+                        count
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0x555"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Fatal Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <chart>
+                <title>Alert Severity</title>
+                <search base="vmax_alert_recent_data">
+                    <query>stats count by severity</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <chart>
+                <title>Alert State</title>
+                <search base="vmax_alert_recent_data">
+                    <query>stats count by state</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <chart>
+                <title>Alert Count Trend (last 48hrs)</title>
+                <search>
+                    <query>`vmax_alert` u4v_source=$source_tok$
+                        array_id=$array_tok$ state=$state_tok$
+                        severity=$severity_tok$
+                        | timechart distinct_count(alert_id) by array_id
+                    </query>
+                    <earliest>$time_tok.earliest$</earliest>
+                    <latest>$time_tok.latest$</latest>
+                </search>
+                <option name="charting.axisTitleX.text">Time</option>
+                <option name="charting.axisTitleX.visibility">collapsed</option>
+                <option name="charting.axisTitleY.text">Alert Count</option>
+                <option name="charting.axisTitleY.visibility">collapsed</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Alert Summary</title>
+            <table>
+                <search base="vmax_alert_recent_data">
+                    <query>| table created_date, created_date_milliseconds,
+                        u4v_source, array_id, asset_id, alert_id, state,
+                        severity, description
+                        | sort -created_date_milliseconds
+                        | fields - created_date_milliseconds
+                        | rename u4v_source as "Unisphere IP", alert_id as
+                        "Alert ID", state as State, severity as "Severity",
+                        created_date as "Created Date", description as
+                        Description, array_id as "Array ID", asset_id as "Object
+                        ID"
+                    </query>
+                </search>
+                <option name="count">10</option>
+                <option name="drilldown">none</option>
+                <option name="refresh.display">progressbar</option>
+            </table>
+        </panel>
+    </row>
+</form>

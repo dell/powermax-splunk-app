@@ -1,0 +1,326 @@
+<form>
+    <label>RDF Directors</label>
+    <search id="vmax_recent_data">
+        <query>`vmax_dir` array_id=$array_tok$ director_type=RDF
+            director_id=$dir_tok$
+            | head 1000 | dedup array_id, director_id
+            | fields array_id, director_id, availability, director_number,
+            director_slot_number, num_of_ports,
+            num_of_cores, num_srdf_groups, number_of_links,
+            number_of_compressed_links, percent_busy,
+            avg_io_service_time, copy_ios, ios, copy_mbs, compressed_mb_sent,
+            compressed_mb_received,
+            compressed_mb_sent_and_received, write_reqs, sys_call_count,
+            avg_time_per_sys_call
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+    <search id="vmax_24hr_data">
+        <query>`vmax_dir` array_id=$array_tok$ director_type=RDF
+            director_id=$dir_tok$
+            | fields array_id, director_id, percent_busy, avg_io_service_time,
+            sys_call_count, write_reqs, ios,
+            copy_ios, copy_mbs, compressed_mb_sent_and_received,
+            compressed_mb_sent, compressed_mb_received
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_array` | dedup array_id | table array_id | sort
+                    array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="dir_tok" searchWhenChanged="true">
+            <label>RDF Director ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_dir` array_id=$array_tok$ director_type=RDF |
+                    dedup director_id | table director_id | sort
+                    director_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>director_id</fieldForLabel>
+            <fieldForValue>director_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+    <row>
+        <panel>
+            <single>
+                <search base="vmax_recent_data">
+                    <query>stats sum(num_srdf_groups)</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0xd93f3c","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">SRDF Groups</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_recent_data">
+                    <query>stats sum(number_of_links)</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0xd93f3c","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Links</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_recent_data">
+                    <query>stats sum(number_of_compressed_links)</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0xd93f3c","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Compressed Links</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>% Busy</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(percent_busy) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Average IO Service Time (ms)</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(avg_io_service_time) by director_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>SysCall Count</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(sys_call_count) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Write Reqs/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(write_reqs) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>IOs/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(ios) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Copy IOs/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(copy_ios) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Copy MBs/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(copy_mbs) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Compressed MBs Sent &amp; Recieved/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(compressed_mb_sent_and_received) by
+                        director_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Compressed MBs Sent/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(compressed_mb_sent) by director_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Compressed MBs Received/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(compressed_mb_received) by
+                        director_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>RDF Director Summary</title>
+            <table>
+                <search base="vmax_recent_data">
+                    <query>
+                        | eval r_percent_busy=round(percent_busy,2),
+                        r_avg_io_service_time=round(avg_io_service_time,2),
+                        r_copy_ios=round(copy_ios,2), r_ios=round(ios,2),
+                        r_copy_mbs=round(copy_mbs,2),
+                        r_compressed_mb_sent=round(compressed_mb_sent,2),
+                        r_compressed_mb_received=round(compressed_mb_received,2),
+                        r_compressed_mb_sent_and_received =
+                        round(compressed_mb_sent_and_received,2),
+                        r_write_reqs=round(write_reqs,2),
+                        r_sys_call_count=round(sys_call_count,2),
+                        r_avg_time_per_sys_call=round(avg_time_per_sys_call,2),
+                        r_number_of_compressed_links=round(number_of_compressed_links,0),
+                        r_number_of_links=round(number_of_links,0)
+                        | table array_id, director_id, availability,
+                        director_number, director_slot_number,
+                        num_of_ports, num_of_cores, num_srdf_groups,
+                        r_number_of_links, r_number_of_compressed_links,
+                        r_percent_busy, r_avg_io_service_time, r_copy_ios,
+                        r_ios, r_copy_mbs, r_compressed_mb_sent,
+                        r_compressed_mb_received,
+                        r_compressed_mb_sent_and_received, r_write_reqs,
+                        r_sys_call_count,
+                        r_avg_time_per_sys_call
+                        | sort array_id, director_id
+                        | rename array_id as "Array ID", director_id as
+                        "Director ID", availability as Availability,
+                        director_number as "Director #", director_slot_number
+                        as "Director Slot #", num_of_ports as "#
+                        Ports", num_of_cores as "# Cores", num_srdf_groups as
+                        "# SRDF Groups",
+                        r_number_of_compressed_links as "# Compressed Links",
+                        r_number_of_links as "# Links",
+                        r_percent_busy as "% Busy", r_avg_io_service_time as
+                        "Avg IO Service Time", r_copy_ios as "Copy
+                        IOs/sec", r_ios as "IOs/sec", r_copy_mbs as "Copy
+                        MBs/sec", r_compressed_mb_sent as "Compressed
+                        MBs sent/sec", r_compressed_mb_received as "Compressed
+                        MBs received/sec",
+                        r_compressed_mb_sent_and_received as "Compressed MBs
+                        Sent &amp; Received/sec", r_write_reqs as
+                        "Write Reqs/sec", r_sys_call_count as "SysCall
+                        Count/sec", r_avg_time_per_sys_call as "Avg Time
+                        per SysCall"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+</form>

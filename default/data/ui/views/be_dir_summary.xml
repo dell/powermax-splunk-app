@@ -1,0 +1,241 @@
+<form>
+    <label>BE Directors</label>
+    <search id="vmax_24hr_data">
+        <query>`vmax_dir` array_id=$array_tok$ director_type=BE
+            director_id=$dir_tok$
+            | fields array_id, director_id, percent_busy, percent_non_io_busy,
+            ios, mbs, mb_read, mb_written, reqs,
+            read_reqs, write_reqs, sys_call_count, avg_time_per_sys_call
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_array` | dedup array_id | table array_id | sort
+                    array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="dir_tok" searchWhenChanged="true">
+            <label>BE Director ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_dir` array_id=$array_tok$ director_type=BE | dedup
+                    director_id | table director_id | sort
+                    director_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>director_id</fieldForLabel>
+            <fieldForValue>director_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+    <row>
+        <panel>
+            <title>% Busy</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(percent_busy) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>% Non-IO Busy</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(percent_non_io_busy) by director_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>IOs/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(ios) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>MBs/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(mbs) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>MBs Read/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(mb_read) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>MBs Written/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(mb_written) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Requests/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(reqs) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>SysCall Count/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(sys_call_count) by director_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Average SysCall Time</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(avg_time_per_sys_call) by
+                        director_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>BE Director Summary</title>
+            <table>
+                <search>
+                    <query>`vmax_dir` array_id=$array_tok$ director_type=BE
+                        director_id=$dir_tok$
+                        | head 1000
+                        | dedup array_id, director_id
+                        | eval round_percent_busy = round(percent_busy,2),
+                        round_percent_nonio_busy =
+                        round(percent_non_io_busy,2), round_ios = round(ios,2),
+                        round_mbs = round(mbs,2), round_reqs =
+                        round(reqs,2), round_read_reqs = round(read_reqs,2),
+                        round_write_reqs = round(write_reqs,2),
+                        round_sys_call_count = round(sys_call_count,2),
+                        round_avg_time_per_sys_call =
+                        round(avg_time_per_sys_call,2)
+                        | table array_id, director_id, availability,
+                        director_number, director_slot_number,
+                        num_of_ports, num_of_cores, round_percent_busy,
+                        round_percent_nonio_busy, round_ios, round_mbs,
+                        round_reqs, round_read_reqs, round_write_reqs,
+                        round_sys_call_count, round_avg_time_per_sys_call
+                        | sort array_id, director_id
+                        | rename array_id as "Array ID", director_id as
+                        "Director ID", availability as Availability,
+                        director_number as "Director #", director_slot_number
+                        as "Director Slot #", num_of_ports as "#
+                        of Ports", num_of_cores as "# of Cores",
+                        round_percent_busy as "% Busy",
+                        round_percent_nonio_busy as "% Non-IO busy", round_ios
+                        as "IOs/sec", round_mbs as "MBs/sec",
+                        round_reqs as "Reqs/sec", round_read_reqs as "Read
+                        Reqs/sec", round_write_reqs as "Write
+                        Reqs/sec", round_sys_call_count as "Syscall Count/sec",
+                        round_avg_time_per_sys_call as "Avg Time
+                        per SysCall"
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+</form>

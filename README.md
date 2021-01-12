@@ -1,1 +1,0 @@
-# powermax-splunk-app

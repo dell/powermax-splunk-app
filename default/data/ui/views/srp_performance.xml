@@ -1,0 +1,180 @@
+<form>
+    <label>SRP Performance</label>
+
+    <search id="vmax_srp_24hr_data">
+        <query>`vmax_srp` array_id=$array_tok$ srp_id=$srp_tok$ | fields
+            array_id, srp_id, be_mb_transferred, be_reqs, host_ios, host_mbs,
+            used_srp_capacity, write_response_time, read_response_time,
+            response_time
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>VMAX Array Serial</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_array` | dedup array_id | table array_id | sort
+                    array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="srp_tok" searchWhenChanged="true">
+            <label>VMAX SRP ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_srp` array_id=$array_tok$ | dedup srp_id | table
+                    srp_id | sort srp_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>srp_id</fieldForLabel>
+            <fieldForValue>srp_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+
+    <row>
+        <panel>
+            <title>BE MBs Transferred/sec</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(be_mb_transferred) by srp_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>BE Reqs/sec</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(be_reqs) by srp_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Host IOs/sec</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(host_ios) by srp_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Host MBs/sec</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(host_mbs) by srp_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Used SRP Capacity (GB)</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(used_srp_capacity) by srp_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Response Time (ms)</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(response_time) by srp_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Read Response Time (ms)</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(read_response_time) by srp_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Write Response Time (ms)</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(write_response_time) by srp_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+</form>

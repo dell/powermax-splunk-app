@@ -1,0 +1,549 @@
+<form>
+    <label>VMAX Performance</label>
+    <search id="vmax_24hr_data">
+        <query>`vmax_array` array_id=$array_tok$ |
+            fields
+            array_id,percent_cache_wp,percent_hit,percent_reads,percent_writes,
+            be_ios,be_utilization,host_ios,host_mbs,
+            fe_utilization,rdf_utilization,read_response_time,write_response_time,
+            da_balance,dx_balance, efd_balance,fc_balance,
+            fe_balance,rdf_balance,cache_balance,sata_balance,disk_utilization,
+            system_max_wp_limit,wp_count,system_wp_events
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_array` | dedup array_id | table array_id | sort
+                    array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+    <row>
+        <panel>
+            <title>Read Response Time (ms)</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(read_response_time) by array_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>% Reads</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(percent_reads) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Write Response Time (ms)</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(write_response_time) by array_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>% Writes</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(percent_writes) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>FE Utilization %</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(fe_utilization) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <drilldown>
+                    <link target="_blank">
+                        /app/Dell-EMC-app-VMAX/fe_dir_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>BE Utilization %</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(be_utilization) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <drilldown>
+                    <link target="_blank">
+                        /app/Dell-EMC-app-VMAX/be_dir_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>RDF Utilization %</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(rdf_utilization) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <drilldown>
+                    <link target="_blank">
+                        /app/Dell-EMC-app-VMAX/rdf_dir_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>Disk Utilization %</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(disk_utilization) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>% Hits</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(percent_hit) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Host IOs/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(host_ios) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <drilldown>
+                    <link target="_blank">/app/Dell-EMC-app-VMAX/host_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>Host MBs/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(host_mbs) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <drilldown>
+                    <link target="_blank">/app/Dell-EMC-app-VMAX/host_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>BE IOs/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(be_ios) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <drilldown>
+                    <link target="_blank">
+                        /app/Dell-EMC-app-VMAX/be_dir_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>% Cache Write Pending</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(percent_cache_wp) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>System Max Write Pending Limit</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(system_max_wp_limit) by array_id
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>System Write Pending Count</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(wp_count) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>System Write Pending Events/sec</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(system_wp_events) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>FC Balance %</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(fc_balance) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>FE Balance %</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(fe_balance) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <drilldown>
+                    <link target="_blank">
+                        /app/Dell-EMC-app-VMAX/fe_dir_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>DA Balance %</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(da_balance) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <drilldown>
+                    <link target="_blank">
+                        /app/Dell-EMC-app-VMAX/be_dir_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>RDF Balance %</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(rdf_balance) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <drilldown>
+                    <link target="_blank">
+                        /app/Dell-EMC-app-VMAX/rdf_dir_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>Cache Balance %</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(cache_balance) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.maximumNumber">100</option>
+                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+    </row>
+</form>

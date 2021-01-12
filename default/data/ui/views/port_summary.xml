@@ -1,0 +1,361 @@
+<form>
+    <label>Ports</label>
+    <search id="vmax_port_24hr_data">
+        <query>`vmax_port` array_id=$array_tok$ port_dir_type="$dir_type_tok$"
+            director_id=$dir_tok$ port_id=$port_tok$ NOT director_id=SE* NOT
+            director_id=DX* | fields array_id, director_id, port_id,
+            dir_port_key, ios, mbs, percent_busy,
+            read_response_time, reads, write_response_time, writes
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+    <search id="vmax_recent_port_data">
+        <query>`vmax_port` array_id=$array_tok$ port_dir_type="$dir_type_tok$"
+            director_id=$dir_tok$ port_id=$port_tok$ NOT director_id=DX*
+            | dedup array_id, director_id, port_id
+            | fields array_id, director_id, director_status, port_id,
+            port_status, type, identifier, num_of_cores, ip_addresses{},
+            num_of_port_groups, portgroup{}, num_of_masking_views,
+            masking_view{}, num_of_mapped_vols, dir_port_key |
+            dedup array_id, dir_port_key
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_array` | dedup array_id | table array_id | sort
+                    desc
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="dir_type_tok" searchWhenChanged="true">
+            <label>Director Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_port` array_id=$array_tok$ | dedup port_dir_type |
+                    table port_dir_type | sort port_dir_type
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>port_dir_type</fieldForLabel>
+            <fieldForValue>port_dir_type</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="dir_tok" searchWhenChanged="true">
+            <label>Director ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_port` array_id=$array_tok$
+                    port_dir_type="$dir_type_tok$" NOT director_id=DX* | dedup
+                    director_id | table director_id | sort director_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>director_id</fieldForLabel>
+            <fieldForValue>director_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="port_tok" searchWhenChanged="true">
+            <label>Port ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_port` array_id=$array_tok$
+                    port_dir_type="$dir_type_tok$" director_id=$dir_tok$ |
+                    dedup port_id | table port_id | sort
+                    port_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>port_id</fieldForLabel>
+            <fieldForValue>port_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+    <row>
+        <panel>
+            <single>
+                <search base="vmax_recent_port_data">
+                    <query>| stats count(dir_port_key)</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">Ports</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_port`
+                        array_id=$array_tok$ port_dir_type="$dir_type_tok$"
+                        director_id=$dir_tok$ port_id=$port_tok$ NOT
+                        director_id=DX* | dedup array_id, director_id, port_id
+                        | sort array_id, director_id, port_id | table array_id,
+                        director_id, port_id, port_status | rename array_id as
+                        "Array ID", director_id as "Director ID", port_id as
+                        "Port ID", port_status as "Port Status"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_recent_port_data">
+                    <query>| spath port_status | search port_status=ON | stats
+                        count(dir_port_key)
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Online Ports</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_port`
+                        array_id=$array_tok$ port_dir_type="$dir_type_tok$"
+                        director_id=$dir_tok$ port_id=$port_tok$ port_status=ON
+                        NOT director_id=DX* | dedup array_id, director_id,
+                        port_id | sort array_id, director_id, port_id | table
+                        array_id, director_id, port_id, port_status | rename
+                        array_id as "Array ID", director_id as "Director ID",
+                        port_id as "Port ID", port_status as "Port Status"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_recent_port_data">
+                    <query>| spath port_status | search port_status=PendOn |
+                        stats count(dir_port_key)
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0xf58f39"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">PendOn Ports</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_blank">search?q=`vmax_port`
+                        array_id=$array_tok$ port_dir_type="$dir_type_tok$"
+                        director_id=$dir_tok$ port_id=$port_tok$
+                        port_status=PendOn NOT director_id=DX* | dedup
+                        array_id, director_id, port_id | sort array_id,
+                        director_id, port_id | table array_id, director_id,
+                        port_id, port_status | rename array_id as "Array ID",
+                        director_id as "Director ID", port_id as "Port ID",
+                        port_status as "Port Status"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_recent_port_data">
+                    <query>| spath port_status | search port_status=OFF | stats
+                        count(dir_port_key)
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Offline Ports</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_blank">search?q=`vmax_port`
+                        array_id=$array_tok$ port_dir_type="$dir_type_tok$"
+                        director_id=$dir_tok$ port_id=$port_tok$
+                        port_status=PendOn NOT director_id=DX* | dedup
+                        array_id, director_id, port_id | sort array_id,
+                        director_id, port_id | table array_id, director_id,
+                        port_id, port_status | rename array_id as "Array ID",
+                        director_id as "Director ID", port_id as "Port ID",
+                        port_status as "Port Status"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Read Response Time (ms)</title>
+            <chart>
+                <search base="vmax_port_24hr_data">
+                    <query>| timechart avg(read_response_time) by dir_port_key
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Host IOs</title>
+            <chart>
+                <search base="vmax_port_24hr_data">
+                    <query>| timechart avg(ios) by dir_port_key usenull=f
+                        useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.text">Time</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">all</option>
+                <drilldown>
+                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>% Busy</title>
+            <chart>
+                <search base="vmax_port_24hr_data">
+                    <query>| timechart avg(percent_busy) by dir_port_key
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Reads/sec</title>
+            <chart>
+                <search base="vmax_port_24hr_data">
+                    <query>| timechart avg(reads) by dir_port_key usenull=f
+                        useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Write Response Time (ms)</title>
+            <chart>
+                <search base="vmax_port_24hr_data">
+                    <query>| timechart avg(write_response_time) by dir_port_key
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Writes/sec</title>
+            <chart>
+                <search base="vmax_port_24hr_data">
+                    <query>| timechart avg(writes) by dir_port_key usenull=f
+                        useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Host MB/s</title>
+            <chart>
+                <search base="vmax_port_24hr_data">
+                    <query>| timechart avg(mbs) by dir_port_key usenull=f
+                        useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">all</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <option name="charting.legend.placement">right</option>
+                <drilldown>
+                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Port Summary</title>
+            <table>
+                <search base="vmax_recent_port_data">
+                    <query>| table array_id, director_id, director_status,
+                        port_id, port_status, type, identifier,num_of_cores,
+                        ip_addresses{}, num_of_port_groups, portgroup{},
+                        num_of_masking_views, masking_view{},
+                        num_of_mapped_vols
+                        | sort array_id, director_id, port_id
+                        | rename array_id as "Array ID", director_id as
+                        "Director ID", director_status as "Director Status",
+                        port_id as "Port ID", port_status as "Port Status",
+                        type as "Port Type", identifier as "Port Identifier",
+                        num_of_cores as "# of Cores", ip_addresses{} as "IP
+                        Addresses", num_of_port_groups as "# of Port Groups",
+                        portgroup{} as "Port Groups", num_of_masking_views as
+                        "# of Masking Views", masking_view{} as "Masking
+                        Views", num_of_mapped_vols as "# of Mapped Vols"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+                <option name="refresh.display">progressbar</option>
+            </table>
+        </panel>
+    </row>
+</form>

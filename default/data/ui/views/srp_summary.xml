@@ -1,0 +1,471 @@
+<form>
+    <label>SRPs</label>
+    <search id="vmax_srp_recent_data">
+        <query>`vmax_srp` array_id=$array_tok$ srp_id=$srp_tok$ | head 1000 |
+            dedup array_id, srp_id | fields array_id,
+            srp_id, total_srp_capacity, total_allocated_cap_gb,
+            total_subscribed_cap_gb, num_of_disk_groups,
+            num_of_srp_sg_demands, srp_slo_demand_id{}, emulation,
+            compression_state, description,
+            num_of_srp_slo_demands, overall_compression_ratio,
+            overall_efficiency
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+    <search id="vmax_srp_24hr_data">
+        <query>`vmax_srp` array_id=$array_tok$ srp_id=$srp_tok$ | fields
+            array_id, srp_id, be_mb_transferred, be_reqs,
+            host_ios, host_mbs, used_srp_capacity, write_response_time,
+            read_response_time, response_time,
+            total_allocated_cap_gb, total_usable_cap_gb, total_srp_capacity,
+            total_subscribed_cap_gb
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+    <search id="vmax_wlp_24hr_data">
+        <query>`vmax_wlp_headroom` array_id=$array_tok$ srp=$srp_tok$
+            | fields array_id, srp, emulation, workload_type, slo_name,
+            headroom_capacity, headroom_expiry_full,
+            headroom_expiry_expiry_confidence
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_array` | dedup array_id | table array_id | sort
+                    array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="srp_tok" searchWhenChanged="true">
+            <label>SRP ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_srp` array_id=$array_tok$ | dedup srp_id | table
+                    srp_id | sort srp_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>srp_id</fieldForLabel>
+            <fieldForValue>srp_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+    <row>
+        <panel>
+            <single>
+                <search base="vmax_srp_recent_data">
+                    <query>| stats sum(total_srp_capacity) AS total_srp
+                        | eval new_total = total_srp/1024
+                        | table new_total
+                    </query>
+                </search>
+                <option name="drilldown">all</option>
+                <option name="numberPrecision">0.00</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">Total SRP Capacity (TB)</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_srp`
+                        array_id=$array_tok$ srp_id=$srp_tok$ | head 1000 |
+                        dedup array_id, srp_id | table array_id, srp_id,
+                        total_srp_capacity | sort array_id, srp_id | rename
+                        array_id as "Array ID", srp_id as "SRP ID",
+                        total_srp_capacity as "Total SRP Capacity (GB)"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_srp_recent_data">
+                    <query>| stats sum(total_allocated_cap_gb) AS
+                        total_allocated
+                        | eval new_total = total_allocated/1024
+                        | table new_total
+                    </query>
+                </search>
+                <option name="drilldown">all</option>
+                <option name="numberPrecision">0.00</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">Total Allocated Capacity (TB)
+                </option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_srp`
+                        array_id=$array_tok$ srp_id=$srp_tok$ | head 1000 |
+                        dedup array_id, srp_id | table array_id, srp_id,
+                        total_allocated_cap_gb | sort array_id, srp_id | rename
+                        array_id as "Array ID", srp_id as "SRP ID",
+                        total_allocated_cap_gb as "Total Allocated Capacity
+                        (GB)"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_srp_recent_data">
+                    <query>| stats sum(total_subscribed_cap_gb) AS
+                        total_subscribed
+                        | eval new_total = total_subscribed/1024
+                        | table new_total
+                    </query>
+                </search>
+                <option name="drilldown">all</option>
+                <option name="numberPrecision">0.00</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">Total Subscribed Capacity (TB)
+                </option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_srp`
+                        array_id=$array_tok$ srp_id=$srp_tok$ | head 1000 |
+                        dedup array_id, srp_id | table array_id,
+                        srp_id,total_subscribed_cap_gb | sort array_id, srp_id
+                        | rename array_id as "Array ID", srp_id as "SRP ID",
+                        total_subscribed_cap_gb as "Total Subscribed Capacity
+                        (GB)"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <single>
+                <search base="vmax_srp_recent_data">
+                    <query>| stats sum(num_of_disk_groups)</query>
+                </search>
+                <option name="drilldown">all</option>
+                <option name="underLabel">Disk Groups</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_srp`
+                        array_id=$array_tok$ srp_id=$srp_tok$ | head 1000 |
+                        dedup array_id, srp_id | table array_id,
+                        srp_id,num_of_disk_groups | sort array_id, srp_id |
+                        rename array_id as "Array ID", srp_id as "SRP ID",
+                        num_of_disk_groups as "# of Disk Groups"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_srp_recent_data">
+                    <query>| stats sum(num_of_srp_sg_demands)</query>
+                </search>
+                <option name="drilldown">all</option>
+                <option name="underLabel">Storage Groups</option>
+                <drilldown>
+                    <link target="_self">/app/Dell-EMC-app-VMAX/sg_summary
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_srp_recent_data">
+                    <query>| stats distinct_count(srp_slo_demand_id{})</query>
+                </search>
+                <option name="drilldown">all</option>
+                <option name="underLabel">Service Level Demands</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_srp`
+                        array_id=$array_tok$ srp_id=$srp_tok$ | head 1000 |
+                        dedup array_id, srp_id | table array_id,
+                        srp_id,srp_slo_demand_id{} | sort array_id, srp_id |
+                        rename array_id as "Array ID", srp_id as "SRP ID",
+                        srp_slo_demand_id{} as "Service Levels Demands"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Response Time (ms)</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(response_time) by srp_id usenull=f
+                        useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Read Response Time (ms)</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(read_response_time) by srp_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Write Response Time (ms)</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(write_response_time) by srp_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>BE MBs Transferred/sec</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(be_mb_transferred) by srp_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">all</option>
+                <drilldown>
+                    <link target="_self">
+                        /app/Dell-EMC-app-VMAX/be_dir_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>BE Reqs/sec</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(be_reqs) by srp_id usenull=f
+                        useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">all</option>
+                <drilldown>
+                    <link target="_self">
+                        /app/Dell-EMC-app-VMAX/be_dir_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Host IOs/sec</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(host_ios) by srp_id usenull=f
+                        useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">all</option>
+                <drilldown>
+                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>Host MBs/sec</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(host_mbs) by srp_id usenull=f
+                        useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">all</option>
+                <drilldown>
+                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>Used SRP Capacity (GB)</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(used_srp_capacity) by srp_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>SRP Capacity Trend (GB)</title>
+            <chart>
+                <search base="vmax_srp_24hr_data">
+                    <query>| timechart avg(total_allocated_cap_gb) as "Total
+                        Allocated (GB)" avg(total_srp_capacity) as "Total
+                        Capacity (GB)" avg(total_subscribed_cap_gb)
+                        as "Total Subscribed (GB)" by srp_id usenull=f
+                        useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY2.text">FBA Free Capacity
+                </option>
+                <option name="charting.axisY2.enabled">0</option>
+                <option name="charting.axisY2.scale">inherit</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showDataLabels">none</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.layout.splitSeries">0</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisMiddle
+                </option>
+                <option name="charting.legend.mode">standard</option>
+                <option name="refresh.display">progressbar</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Headroom Capacity by Workload Type</title>
+            <chart>
+                <search base="vmax_wlp_24hr_data">
+                    <query>timechart avg(headroom_capacity) by workload_type
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">all</option>
+                <option name="refresh.display">progressbar</option>
+                <drilldown>
+                    <link target="_self">/app/Dell-EMC-app-VMAX/wlp_headroom
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>Headroom Expiry - Days Until Full</title>
+            <chart>
+                <search base="vmax_wlp_24hr_data">
+                    <query>timechart avg(headroom_expiry_full) by workload_type
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">all</option>
+                <option name="refresh.display">progressbar</option>
+                <drilldown>
+                    <link target="_self">/app/Dell-EMC-app-VMAX/wlp_headroom
+                    </link>
+                </drilldown>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Storage Resource Pool Summary</title>
+            <table>
+                <search base="vmax_srp_recent_data">
+                    <query>| sort array_id, srp_id
+                        | table array_id, srp_id, description, emulation,
+                        compression_state, total_srp_capacity,
+                        total_allocated_cap_gb, total_subscribed_cap_gb,
+                        num_of_disk_groups, num_of_srp_sg_demands,
+                        num_of_srp_slo_demands, srp_slo_demand_id{},
+                        overall_compression_ratio, overall_efficiency
+                        | rename array_id as "Array ID", srp_id as "SRP ID",
+                        description as Description, emulation as
+                        Emulation, compression_state as "Compression State",
+                        total_srp_capacity as "Total Capacity
+                        (GB)", total_allocated_cap_gb as "Total Allocated
+                        (GB)", total_subscribed_cap_gb as "Total
+                        Subscribed (GB)", num_of_disk_groups as "Disk Groups",
+                        num_of_srp_sg_demands as "Storage
+                        Groups", num_of_srp_slo_demands as "SLO Demands",
+                        srp_slo_demand_id{} as "SLO Demand Type",
+                        overall_compression_ratio as "Overall Compression
+                        Ratio", overall_efficiency as "Overall
+                        Efficiency Ratio"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+</form>

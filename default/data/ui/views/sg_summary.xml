@@ -1,0 +1,359 @@
+<form>
+    <label>Storage Group Summary</label>
+    <search id="vmax_sg_recent_data">
+        <query>`vmax_sg` array_id=$array_tok$ srp=$srp_tok$
+            storage_group_id=$sg_tok$ | head 10000 | dedup array_id,
+            srp, storage_group_id | fields array_id, srp, storage_group_id,
+            info_alert_count, warning_alert_count,
+            critical_alert_count, slo_compliance, type, slo, workload,
+            device_emulation, allocated_capacity,
+            num_of_vols, unprotected, cap_gb, num_of_masking_views
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+    <search id="vmax_24hr_data">
+        <query>`vmax_sg` array_id=$array_tok$ srp=$srp_tok$
+            storage_group_id=$sg_tok$ | fields array_id, srp,
+            storage_group_id, allocated_capacity, num_of_vols
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_array` | dedup array_id | table array_id | sort
+                    array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="srp_tok" searchWhenChanged="true">
+            <label>SRP ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_sg` array_id=$array_tok$ | dedup srp | table srp |
+                    sort srp
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>srp</fieldForLabel>
+            <fieldForValue>srp</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="sg_tok" searchWhenChanged="true">
+            <label>Storage Group ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`vmax_sg` array_id=$array_tok$ srp=$srp_tok$ | dedup
+                    storage_group_id | table storage_group_id |
+                    sort storage_group_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>storage_group_id</fieldForLabel>
+            <fieldForValue>storage_group_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+    <row>
+        <panel>
+            <single>
+                <search base="vmax_sg_recent_data">
+                    <query>spath slo_compliance | search slo_compliance=NONE |
+                        stats count(slo_compliance)
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">No Compliance Storage Groups</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_sg`
+                        array_id=$array_tok$ srp=$srp_tok$
+                        storage_group_id=$sg_tok$ slo_compliance=NONE | head
+                        10000 | dedup array_id, srp, storage_group_id | table
+                        array_id, srp, storage_group_id, slo_compliance | sort
+                        array_id, srp, storage_group_id | rename array_id as
+                        "Array ID", srp as "SRP ID", storage_group_id as
+                        "Storage Group ID", slo_compliance as "Service Level
+                        Compliance"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_sg_recent_data">
+                    <query>spath slo_compliance | search slo_compliance=STABLE
+                        | stats count(slo_compliance)
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0xd93f3c","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Stable Storage Groups</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_sg`
+                        array_id=$array_tok$ srp=$srp_tok$
+                        storage_group_id=$sg_tok$ slo_compliance=Stable | head
+                        10000 | dedup array_id, srp, storage_group_id | table
+                        array_id, srp, storage_group_id, slo_compliance | sort
+                        array_id, srp, storage_group_id | rename array_id as
+                        "Array ID", srp as "SRP ID", storage_group_id as
+                        "Storage Group ID", slo_compliance as "Service Level
+                        Compliance"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_sg_recent_data">
+                    <query>spath slo_compliance | search
+                        slo_compliance=MARGINAL | stats count(slo_compliance)
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0xf58f39"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Marginal Storage Groups</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_sg`
+                        array_id=$array_tok$ srp=$srp_tok$
+                        storage_group_id=$sg_tok$ slo_compliance=Marginal |
+                        head 10000 | dedup array_id, srp, storage_group_id |
+                        table array_id, srp, storage_group_id, slo_compliance |
+                        sort array_id, srp, storage_group_id | rename array_id
+                        as "Array ID", srp as "SRP ID", storage_group_id as
+                        "Storage Group ID", slo_compliance as "Service Level
+                        Compliance"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_sg_recent_data">
+                    <query>spath slo_compliance | search
+                        slo_compliance=CRITICAL | stats count(slo_compliance)
+                    </query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Critical Storage Groups</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_self">search?q=`vmax_sg`
+                        array_id=$array_tok$ srp=$srp_tok$
+                        storage_group_id=$sg_tok$ slo_compliance=Critical |
+                        head 10000 | dedup array_id, srp, storage_group_id |
+                        table array_id, srp, storage_group_id, slo_compliance |
+                        sort array_id, srp, storage_group_id | rename array_id
+                        as "Array ID", srp as "SRP ID", storage_group_id as
+                        "Storage Group ID", slo_compliance as "Service Level
+                        Compliance"&amp;earliest=-15m&amp;latest=now
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <single>
+                <search base="vmax_sg_recent_data">
+                    <query>stats sum(info_alert_count)</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Info Storage Group Alerts</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_blank">/app/Dell-EMC-app-VMAX/vmax_alerts
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_sg_recent_data">
+                    <query>stats sum(warning_alert_count)</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0xf58f39"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Warning Storage Group Alerts</option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_blank">/app/Dell-EMC-app-VMAX/vmax_alerts
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="vmax_sg_recent_data">
+                    <query>stats sum(critical_alert_count)</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="drilldown">all</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Critical Storage Group Alerts
+                </option>
+                <option name="useColors">1</option>
+                <drilldown>
+                    <link target="_blank">/app/Dell-EMC-app-VMAX/vmax_alerts
+                    </link>
+                </drilldown>
+            </single>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Storage Group Types</title>
+            <chart>
+                <search base="vmax_sg_recent_data">
+                    <query>search type | stats count by type</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Storage Group Service Levels</title>
+            <chart>
+                <search base="vmax_sg_recent_data">
+                    <query>search slo | stats count by slo</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Storage Group Workloads</title>
+            <chart>
+                <search base="vmax_sg_recent_data">
+                    <query>search workload | stats count by workload</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Storage Group Device Emulation</title>
+            <chart>
+                <search base="vmax_sg_recent_data">
+                    <query>search device_emulation | stats count by
+                        device_emulation
+                    </query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Storage Group Allocated Capacity (GB)</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(allocated_capacity) by
+                        storage_group_id usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="refresh.display">progressbar</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Storage Group Volume Count</title>
+            <chart>
+                <search base="vmax_24hr_data">
+                    <query>timechart avg(num_of_vols) by storage_group_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="refresh.display">progressbar</option>
+            </chart>
+        </panel>
+    </row>
+    <row>
+        <panel>
+            <title>Storage Group Summary</title>
+            <table>
+                <search base="vmax_sg_recent_data">
+                    <query>
+                        | eval round_allocated_capacity =
+                        round(allocated_capacity, 2), round_info_alert_count =
+                        round(info_alert_count, 0), round_warning_alert_count =
+                        round(warning_alert_count, 0),
+                        round_critical_alert_count =
+                        round(critical_alert_count, 0)
+                        | table array_id, srp, storage_group_id, type,
+                        device_emulation, unprotected, slo, workload,
+                        slo_compliance, cap_gb, round_allocated_capacity,
+                        num_of_vols, num_of_masking_views,
+                        round_info_alert_count, round_warning_alert_count,
+                        round_critical_alert_count
+                        | sort array_id, storage_group_id
+                        | rename array_id as "Array ID", srp as "SRP ID",
+                        storage_group_id as "Storage Group ID",
+                        slo_compliance as "SLO Compliance", type as "Type",
+                        device_emulation as "Device Emulation",
+                        unprotected as Unprotected, cap_gb as "Capcity (GB)",
+                        round_allocated_capacity as "Allocated
+                        Capacity", num_of_vols as "Number of Volumes",
+                        num_of_masking_views as "Number of Masking
+                        Views", round_info_alert_count as "Info Alerts",
+                        round_warning_alert_count as "Warning Alerts",
+                        round_critical_alert_count as "Critical Alerts", slo as
+                        "Service Level", workload as "Workload
+                        Type"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+</form>
