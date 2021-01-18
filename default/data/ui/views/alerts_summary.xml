@@ -1,0 +1,337 @@
+<form theme="dark">
+
+    <label>Alerts</label>
+
+    <search id="powermax_recent_data">
+        <query>`powermax_alert`
+            u4v_source=$source_tok$
+            u4v_source=$source_tok$
+            array_id=$array_tok$
+            object_type=$object_type_tok$
+            severity=$severity_tok$
+            state=$state_tok$
+            acknowledged=$ack_tok$
+            | dedup u4v_source, alert_id
+            | fields created_date, u4v_source, array_id, asset_id, alert_id,
+            type, object_type, state, severity, acknowledged, description,
+            created_date_milliseconds
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="source_tok" searchWhenChanged="true">
+            <label>Unisphere Source</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_alert`
+                    array_id=$array_tok$
+                    object_type=$object_type_tok$
+                    severity=$severity_tok$
+                    state=$state_tok$
+                    acknowledged=$ack_tok$
+                    | dedup u4v_source
+                    | table u4v_source
+                    | sort u4v_source
+                </query>
+                <earliest>-15m</earliest>
+                <latest>now</latest>
+            </search>
+            <fieldForLabel>u4v_source</fieldForLabel>
+            <fieldForValue>u4v_source</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_alert`
+                    u4v_source=$source_tok$
+                    object_type=$object_type_tok$
+                    severity=$severity_tok$
+                    state=$state_tok$
+                    acknowledged=$ack_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
+                </query>
+                <earliest>-15m</earliest>
+                <latest>now</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="object_type_tok" searchWhenChanged="true">
+            <label>Asset Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_alert`
+                    u4v_source=$source_tok$
+                    array_id=$array_tok$
+                    severity=$severity_tok$
+                    state=$state_tok$
+                    acknowledged=$ack_tok$
+                    | dedup object_type
+                    | table object_type
+                    | sort object_type
+                </query>
+                <earliest>-15m</earliest>
+                <latest>now</latest>
+            </search>
+            <fieldForLabel>object_type</fieldForLabel>
+            <fieldForValue>object_type</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="severity_tok" searchWhenChanged="true">
+            <label>Severity</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_alert`
+                    u4v_source=$source_tok$
+                    array_id=$array_tok$
+                    object_type=$object_type_tok$
+                    state=$state_tok$
+                    acknowledged=$ack_tok$
+                    | dedup severity
+                    | table severity
+                    | sort severity
+                </query>
+                <earliest>-15m</earliest>
+                <latest>now</latest>
+            </search>
+            <fieldForLabel>severity</fieldForLabel>
+            <fieldForValue>severity</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="state_tok" searchWhenChanged="true">
+            <label>State</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_alert`
+                    u4v_source=$source_tok$
+                    array_id=$array_tok$
+                    object_type=$object_type_tok$
+                    severity=$severity_tok$
+                    acknowledged=$ack_tok$
+                    | dedup state
+                    | table state
+                    | sort state
+                </query>
+                <earliest>-15m</earliest>
+                <latest>now</latest>
+            </search>
+            <fieldForLabel>state</fieldForLabel>
+            <fieldForValue>state</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="ack_tok" searchWhenChanged="true">
+            <label>Acknowledged</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_alert`
+                    u4v_source=$source_tok$
+                    array_id=$array_tok$
+                    object_type=$object_type_tok$
+                    severity=$severity_tok$
+                    state=$state_tok$
+                    | dedup acknowledged
+                    | table acknowledged
+                    | sort acknowledged
+                </query>
+                <earliest>-15m</earliest>
+                <latest>now</latest>
+            </search>
+            <fieldForLabel>acknowledged</fieldForLabel>
+            <fieldForValue>acknowledged</fieldForValue>
+            <default>*</default>
+        </input>
+
+    </fieldset>
+
+    <!--First Row - Alert Level Stats-->
+    <row>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        spath severity
+                        | search severity=Information
+                        | stats count
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Info Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        spath severity
+                        | search severity=Minor
+                        | stats count
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Minor Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        spath severity
+                        | search severity=Normal
+                        | stats count
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Normal Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        spath severity
+                        | search severity=Warning
+                        | stats count
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf58f39"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Warning Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        spath severity
+                        | search severity=Critical
+                        | stats count
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Critical Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        spath severity
+                        | search severity=FATAL
+                        | stats count
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0x555"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Fatal Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+    </row>
+
+    <!--Second Row - Alert Type Stats-->
+    <row>
+        <panel>
+            <chart>
+                <title>Source</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by u4v_source</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <chart>
+                <title>Asset Type</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by object_type</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <chart>
+                <title>Severity</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by severity</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <chart>
+                <title>State</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by state</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+    <!--Third Row - Alert Summary-->
+    <row>
+        <panel>
+            <table>
+                <search base="powermax_recent_data">
+                    <query>
+                        | table created_date, u4v_source, array_id, asset_id,
+                        alert_id, object_type, state, severity,
+                        description
+                        | sort -created_date_milliseconds
+                        | fields - created_date_milliseconds
+                        | rename created_date as "Created Date",
+                        u4v_source as "Unisphere",
+                        array_id as "Array ID",
+                        asset_id as "Asset ID",
+                        alert_id as "Alert ID",
+                        object_type as "Asset Type",
+                        state as "State",
+                        severity as "Severity",
+                        description as "Description"
+                    </query>
+                </search>
+                <option name="count">10</option>
+                <option name="drilldown">none</option>
+                <option name="refresh.display">progressbar</option>
+            </table>
+        </panel>
+    </row>
+
+</form>

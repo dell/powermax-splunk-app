@@ -1,29 +1,45 @@
-<nav search_view="search" color="#297ba5">
-    <view name="overview" label="overview" default='true'/>
-    <collection label="VMAX">
-        <view name="array_summary" label="VMAX Summary"/>
-        <view name="array_performance" label="VMAX Performance"/>
+<nav search_view="search">
+    <view name="overview" default='true'/>
+    <collection label="PowerMax">
+        <a href="array_summary">Overview</a>
+        <a href="array_performance">Performance</a>
     </collection>
-    <view name="srp_summary" label="SRP Summary"/>
-    <collection label="Storage Group">
-        <view name="sg_summary" label="SG Summary"/>
-        <view name="sg_performance" label="SG Performance"/>
+    <collection label="Storage">
+        <a href="srp_summary">Storage Resource Pools</a>
+        <collection label="Storage Groups">
+            <a href="sg_summary">Overview</a>
+            <a href="sg_performance">Performance</a>
+        </collection>
     </collection>
-    <collection label="Directors">
-        <view name="fe_dir_summary" label="FE Director"/>
-        <view name="be_dir_summary" label="BE Director"/>
-        <view name="rdf_dir_summary" label="RDF Director"/>
-        <view name="im_dir_summary" label="IM Director"/>
-        <view name="eds_dir_summary" label="EDS Director"/>
+    <collection label="Hosts">
+        <a href="host_summary">Hosts</a>
+        <a href="initiator_summary">Initiators</a>
+        <a href="masking_view_summary">Masking Views</a>
+        <a href="port_group_summary">Port Groups</a>
     </collection>
-    <view name="port_summary" label="Ports"/>
-    <view name="port_group_summary" label="Port Groups"/>
-    <view name="host_summary" label="Hosts"/>
-    <view name="initiator_summary" label="Initiator Summary"/>
-    <collection label="Workload Planner">
-        <view name="wlp_compliance" label="WLP Compliance"/>
-        <view name="wlp_headroom" label="WLP Headroom"/>
+    <collection label="Replication">
+        <a href="snap_policy_summary">Snapshot Policies</a>
+        <collection label="RDF Groups">
+            <a href="rdfs_summary">RDF/S Groups</a>
+            <a href="rdfa_summary">RDF/A Groups</a>
+        </collection>
+        <a href="metro_dr_summary">Metro DR</a>
     </collection>
-    <view name="vmax_alerts" label="VMAX Alerts"/>
+    <collection label="System">
+        <collection label="Directors">
+            <a href="fe_dir_summary">Front End Directors</a>
+            <a href="be_dir_summary">Back End Directors</a>
+            <a href="rdf_dir_summary">RDF Directors</a>
+            <a href="im_dir_summary">IM Directors</a>
+            <a href="eds_dir_summary">EDS Directors</a>
+        </collection>
+        <a href="port_summary">Ports</a>
+        <collection label="iSCSI">
+            <a href="iscsi_tgt_summary">iSCSI Targets</a>
+            <a href="ip_interface_summary">IP Interfaces</a>
+        </collection>
+        <a href="alerts_summary">Alerts</a>
+        <a href="audit_log_summary">Audit Logs</a>
+    </collection>
     <view name="search" label="Search"/>
 </nav>

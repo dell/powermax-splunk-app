@@ -1,24 +1,41 @@
-<form>
-    <label>FE Directors</label>
-    <search id="vmax_24hr_data">
-        <query>`vmax_dir` array_id=$array_tok$ director_type=FE
-            director_id=$dir_tok$ NOT director_id=SE*
-            | fields array_id, director_type, director_id, percent_busy,
-            percent_busy_logical_core_0,
-            percent_busy_logical_core_1, host_io_limit_ios, host_io_limit_mbs,
-            host_ios, host_mbs, read_response_time,
-            write_response_time, queue_depth_utilization, sys_call_count
+<form theme="dark">
+    <label>Front End Directors</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_dir`
+            director_type=FE NOT director_id=SE*
+            array_id=$array_tok$
+            director_id=$dir_tok$
+            availability=$avail_tok$
+            director_slot_number=$slot_tok$
+            | rex field=array_id "(?&lt;array_short&gt;.{3}$)"
+            | eval array_dir = array_short . ":" . director_id
+            | fields array_id, array_dir, director_id,
+            read_response_time, write_response_time, percent_busy,
+            host_io_limit_ios, host_io_limit_mbs, host_ios, host_mbs,
+            queue_depth_utilization, sys_call_count
         </query>
         <earliest>$time_tok.earliest$</earliest>
         <latest>$time_tok.latest$</latest>
     </search>
+
+    <!--Array selection field-->
     <fieldset submitButton="false" autoRun="true">
         <input type="dropdown" token="array_tok" searchWhenChanged="true">
             <label>Array ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_array` | dedup array_id | table array_id | sort
-                    array_id
+                <query>
+                    `powermax_dir`
+                    director_type=FE
+                    director_id=$dir_tok$
+                    availability=$avail_tok$
+                    director_slot_number=$slot_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -27,12 +44,61 @@
             <fieldForValue>array_id</fieldForValue>
             <default>*</default>
         </input>
+        <input type="dropdown" token="avail_tok" searchWhenChanged="true">
+            <label>Availability</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_dir`
+                    director_type=FE
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    director_slot_number=$slot_tok$
+                    | dedup availability
+                    | table availability
+                    | sort availability
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>availability</fieldForLabel>
+            <fieldForValue>availability</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="slot_tok" searchWhenChanged="true">
+            <label>Director Slot #</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_dir`
+                    director_type=FE
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    availability=$avail_tok$
+                    | dedup director_slot_number
+                    | table director_slot_number
+                    | sort director_slot_number
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>director_slot_number</fieldForLabel>
+            <fieldForValue>director_slot_number</fieldForValue>
+            <default>*</default>
+        </input>
         <input type="dropdown" token="dir_tok" searchWhenChanged="true">
             <label>FE Director ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_dir` array_id=$array_tok$ director_type=FE
-                    | dedup director_id | table director_id | sort director_id
+                <query>
+                    `powermax_dir`
+                    director_type=FE
+                    array_id=$array_tok$
+                    availability=$avail_tok$
+                    director_slot_number=$slot_tok$
+                    | dedup director_id
+                    | table director_id
+                    | sort director_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -49,14 +115,51 @@
             </default>
         </input>
     </fieldset>
+
+    <!--Dashboard first row - Fe Director Summary-->
+    <row>
+        <panel>
+            <table>
+                <search>
+                    <query>
+                        `powermax_dir`
+                        director_type=FE
+                        array_id=$array_tok$
+                        director_id=$dir_tok$
+                        availability=$avail_tok$
+                        director_slot_number=$slot_tok$
+                        | head 1000
+                        | dedup array_id, director_id
+                        | sort array_id, director_id
+                        | table array_id, director_id, availability,
+                        director_slot_number, director_number,
+                        num_of_ports, num_of_cores
+                        | rename array_id as "Array ID",
+                        director_id as "Director ID",
+                        availability as "Availability",
+                        director_number as "Director #",
+                        director_slot_number as "Director Slot #",
+                        num_of_ports as "# Ports",
+                        num_of_cores as "# Cores"
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - Response Times-->
     <row>
         <panel>
             <title>Read Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(read_response_time) by director_id
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(read_response_time) by array_dir
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -69,10 +172,11 @@
         <panel>
             <title>Write Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(write_response_time) by director_id
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(write_response_time) by array_dir
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -85,9 +189,10 @@
         <panel>
             <title>% Busy</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_busy) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(percent_busy) by array_dir</query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -98,95 +203,88 @@
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - Host IO/MB + limits-->
     <row>
         <panel>
             <title>Host IO Limit IOs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_io_limit_ios) by director_id
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(host_io_limit_ios) by array_dir
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Host IO Limit MBs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_io_limit_mbs) by director_id
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(host_io_limit_mbs) by array_dir
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Host IOs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_ios) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(host_ios) by array_dir</query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Host MBs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_mbs) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(host_mbs) by array_dir</query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
     </row>
-    <row>
+
+    <!--Dashboard fourth row - Queue depth & syscall count-->
+        <row>
         <panel>
             <title>% Queue Depth Utilization</title>
             <chart>
-                <search base="vmax_24hr_data">
+                <search base="powermax_24hr_data">
                     <query>timechart avg(queue_depth_utilization) by
-                        director_id
+                        array_dir
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -199,9 +297,10 @@
         <panel>
             <title>SysCall Count/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(sys_call_count) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(sys_call_count) by array_dir</query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -212,47 +311,5 @@
             </chart>
         </panel>
     </row>
-    <row>
-        <panel>
-            <title>FE Director Summary</title>
-            <table>
-                <search>
-                    <query>`vmax_dir` array_id=$array_tok$ director_type=FE
-                        director_id=$dir_tok$
-                        | head 1000
-                        | dedup array_id, director_id
-                        | sort array_id, director_id
-                        | eval round_percent_busy = round(percent_busy,2),
-                        round_queue_depth_utilization =
-                        round(queue_depth_utilization,2), round_host_ios =
-                        round(host_ios,2), round_host_mbs =
-                        round(host_mbs,2), round_reqs = round(reqs,2),
-                        round_system_wp_events =
-                        round(system_wp_events,0), round_device_wp_events =
-                        round(device_wp_events,0)
-                        | table array_id, director_id, availability,
-                        director_number, director_slot_number,
-                        num_of_ports, num_of_cores, round_percent_busy,
-                        round_queue_depth_utilization, round_host_ios,
-                        round_host_mbs, round_reqs, round_system_wp_events,
-                        round_device_wp_events
-                        | rename array_id as "Array ID", director_id as
-                        "Director ID", availability as "Availability",
-                        director_number as "Director Number",
-                        director_slot_number as "Slot Number", num_of_ports as
-                        Ports, num_of_cores as Cores, round_percent_busy as "%
-                        Busy", round_queue_depth_utilization as
-                        "% Queue Depth Utilization", round_host_ios as "Host
-                        IOs/sec", round_host_mbs as "Host MBs/sec",
-                        round_reqs as "Reqs/sec", round_system_wp_events as
-                        "System WP Events", round_device_wp_events
-                        as "Device WP Events"
-                    </query>
-                    <earliest>-15m</earliest>
-                    <latest>now</latest>
-                </search>
-                <option name="drilldown">none</option>
-            </table>
-        </panel>
-    </row>
+
 </form>

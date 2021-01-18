@@ -1,0 +1,317 @@
+<form theme="dark">
+    <label>iSCSI Target Overview &amp; Performance</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_iscsi_tgt`
+            port_status=$status_tok$
+            array_id=$array_tok$
+            director_id=$dir_tok$
+            port_status=$status_tok$
+            type=$type_tok$
+            identifier=$iscsi_tgt_tok$
+            | fillnull value=None ip_addresses{}
+            | search ip_addresses{}=$ip_tok$
+            | fields array_id, director_id, port_id, identifier,
+            io_rate, mbs, packet_count, reads, writes
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+
+    <!--Port selection field-->
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_iscsi_tgt`
+                    director_id=$dir_tok$
+                    port_status=$status_tok$
+                    type=$type_tok$
+                    identifier=$iscsi_tgt_tok$
+                    | fillnull value=None ip_addresses{}
+                    | search ip_addresses{}=$ip_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="dir_tok" searchWhenChanged="true">
+            <label>Director ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_iscsi_tgt`
+                    array_id=$array_tok$
+                    port_status=$status_tok$
+                    type=$type_tok$
+                    identifier=$iscsi_tgt_tok$
+                    | fillnull value=None ip_addresses{}
+                    | search ip_addresses{}=$ip_tok$
+                    | dedup director_id
+                    | table director_id
+                    | sort director_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>director_id</fieldForLabel>
+            <fieldForValue>director_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="status_tok" searchWhenChanged="true">
+            <label>Status</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_iscsi_tgt`
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    type=$type_tok$
+                    identifier=$iscsi_tgt_tok$
+                    | fillnull value=None ip_addresses{}
+                    | search ip_addresses{}=$ip_tok$
+                    | dedup port_status
+                    | table port_status
+                    | sort port_status
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>port_status</fieldForLabel>
+            <fieldForValue>port_status</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="type_tok" searchWhenChanged="true">
+            <label>Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_iscsi_tgt`
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    port_status=$status_tok$
+                    identifier=$iscsi_tgt_tok$
+                    | fillnull value=None ip_addresses{}
+                    | search ip_addresses{}=$ip_tok$
+                    | dedup type
+                    | table type
+                    | sort type
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>type</fieldForLabel>
+            <fieldForValue>type</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="ip_tok" searchWhenChanged="true">
+            <label>IP Address</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_iscsi_tgt`
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    port_status=$status_tok$
+                    type=$type_tok$
+                    identifier=$iscsi_tgt_tok$
+                    | fillnull value=None ip_addresses{}
+                    | mvexpand ip_addresses{}
+                    | dedup ip_addresses{}
+                    | table ip_addresses{}
+                    | sort ip_addresses{}
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>ip_addresses{}</fieldForLabel>
+            <fieldForValue>ip_addresses{}</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="iscsi_tgt_tok" searchWhenChanged="true">
+            <label>iSCSI Target</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_iscsi_tgt`
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    port_status=$status_tok$
+                    type=$type_tok$
+                    | fillnull value=None ip_addresses{}
+                    | search ip_addresses{}=$ip_tok$
+                    | dedup identifier
+                    | table identifier
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>identifier</fieldForLabel>
+            <fieldForValue>identifier</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+
+    <!--Dashboard first row - iSCSI Tgt Summary-->
+    <row>
+        <panel>
+            <table>
+                <search>
+                    <query>
+                        `powermax_iscsi_tgt`
+                        array_id=$array_tok$
+                        director_id=$dir_tok$
+                        port_status=$status_tok$
+                        type=$type_tok$
+                        identifier=$iscsi_tgt_tok$
+                        | fillnull value=None ip_addresses{}
+                        | search ip_addresses{}=$ip_tok$
+                        | dedup array_id, director_id, port_id, identifier
+                        | fillnull value=0 num_of_cores, num_of_port_groups,
+                        num_of_masking_views, num_of_mapped_vols
+                        | table array_id, director_id, port_id, director_status,
+                        port_status, identifier, type, ip_addresses{},
+                        num_of_cores, num_of_port_groups, num_of_masking_views,
+                        num_of_mapped_vols
+                        | sort array_id, director_id, port_id, identifier
+                        | rename array_id as "Array ID",
+                        director_id as "Director ID",
+                        port_id as "Port ID",
+                        director_status as "Director Status",
+                        port_status as "Port Status",
+                        type as "Port Type",
+                        identifier as "IQN"
+                        ip_addresses{} as "IP Address",
+                        num_of_cores as "# Cores",
+                        num_of_port_groups as "# Port Groups",
+                        num_of_masking_views as "# Masking Views",
+                        num_of_mapped_vols as "# Mapped Vols"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+                <option name="refresh.display">progressbar</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - IO Rate/Packet Count/MBs-->
+    <row>
+        <panel>
+            <title>IO Rate/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(io_rate) by identifier
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Packet Count/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(packet_count) by identifier
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>MBs/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(mbs) by identifier
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+    <!--Dashboard third row - Reads & Writes-->
+    <row>
+        <panel>
+            <title>Reads/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(reads) by identifier
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Writes/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(writes) by identifier
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+</form>

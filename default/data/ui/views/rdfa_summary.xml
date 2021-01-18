@@ -1,0 +1,417 @@
+<form theme="dark">
+    <label>RDF/A Group Overview &amp; Performance</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_rdfg_recent_data">
+        <query>
+            `powermax_rdfa_group`
+            array_id=$array_tok$
+            type=$type_tok$
+            offline=$offline_tok$
+            remote_symmetrix=$r2_tok$
+            label=$label_tok$
+            rdfg_number=$rdfg_num_tok$
+            | fields array_id, type, offline, label, rdfg_number,
+            remote_symmetrix, remote_rdfg_number, num_devices,
+            total_device_capacity
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+
+    <search id="powermax_rdf_pair_recent_data">
+        <query>
+            `powermax_rdf_pair`
+            array_id=$array_tok$
+            type=$type_tok$
+            local_rdf_group_number=$rdfg_num_tok$
+            rdfg_label=$label_tok$
+            remote_symmetrix_id=$r2_tok$
+            rdf_mode="Asynchronous"
+            | fields array_id, rdf_mode, local_volume_name, local_volume_state,
+            remote_volume_name, remote_volume_state, volume_config, rdf_pair_state
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_rdfa_group`
+            array_id=$array_tok$
+            type=$type_tok$
+            offline=$offline_tok$
+            remote_symmetrix=$r2_tok$
+            label=$label_tok$
+            rdfg_number=$rdfg_num_tok$
+            | fields array_id, rdfg_number,
+            rdf_response_time, rdf_r1_r2_ios, rdf_r1_r2_mbs,
+            local_wp_count, rdfa_wp_count,
+            avg_cycle_size, avg_cycle_time, avg_io_service_time
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+
+    <!--RDFG selection field-->
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_rdfa_group`
+                    type=$type_tok$
+                    offline=$offline_tok$
+                    remote_symmetrix=$r2_tok$
+                    label=$label_tok$
+                    rdfg_number=$rdfg_num_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="type_tok" searchWhenChanged="true">
+            <label>Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_rdfa_group`
+                    array_id=$array_tok$
+                    offline=$offline_tok$
+                    remote_symmetrix=$r2_tok$
+                    label=$label_tok$
+                    rdfg_number=$rdfg_num_tok$
+                    | dedup type
+                    | table type
+                    | sort type
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>type</fieldForLabel>
+            <fieldForValue>type</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="offline_tok" searchWhenChanged="true">
+            <label>Offline</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_rdfa_group`
+                    array_id=$array_tok$
+                    remote_symmetrix=$r2_tok$
+                    type=$type_tok$
+                    label=$label_tok$
+                    rdfg_number=$rdfg_num_tok$
+                    | dedup offline
+                    | table offline
+                    | sort offline
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>offline</fieldForLabel>
+            <fieldForValue>offline</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="r2_tok" searchWhenChanged="true">
+            <label>Remote Array</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_rdfa_group`
+                    array_id=$array_tok$
+                    type=$type_tok$
+                    offline=$offline_tok$
+                    label=$label_tok$
+                    rdfg_number=$rdfg_num_tok$
+                    | dedup remote_symmetrix
+                    | table remote_symmetrix
+                    | sort remote_symmetrix
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>remote_symmetrix</fieldForLabel>
+            <fieldForValue>remote_symmetrix</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="label_tok" searchWhenChanged="true">
+            <label>RDFG Label</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_rdfa_group`
+                    array_id=$array_tok$
+                    type=$type_tok$
+                    offline=$offline_tok$
+                    remote_symmetrix=$r2_tok$
+                    rdfg_number=$rdfg_num_tok$
+                    | dedup label
+                    | table label
+                    | sort label
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>label</fieldForLabel>
+            <fieldForValue>label</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="rdfg_num_tok" searchWhenChanged="true">
+            <label>RDFG Number</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_rdfa_group`
+                    array_id=$array_tok$
+                    type=$type_tok$
+                    offline=$offline_tok$
+                    remote_symmetrix=$r2_tok$
+                    label=$label_tok$
+                    | dedup rdfg_number
+                    | table rdfg_number
+                    | sort rdfg_number
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>rdfg_number</fieldForLabel>
+            <fieldForValue>rdfg_number</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+
+    <!--Dashboard first row - RDFG Summary-->
+    <row>
+        <panel>
+            <title>RDF Group Summary</title>
+            <table>
+                <search base="powermax_rdfg_recent_data">
+                    <query>
+                        | dedup array_id, rdfg_number
+                        | table array_id, type, offline, label, rdfg_number,
+                        remote_symmetrix, remote_rdfg_number, num_devices,
+                        total_device_capacity
+                        | sort array_id, rdfg_number
+                        | rename array_id as "Array ID",
+                        type as "Type",
+                        offline as "Offline",
+                        label as "Label",
+                        rdfg_number as "RDFG #",
+                        remote_symmetrix as "R2 Array",
+                        remote_rdfg_number as "R2 RDFG #",
+                        num_devices as "# Devices",
+                        total_device_capacity as "Capacity (GB)"
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+        <panel>
+            <title>RDF Device Pair Summary</title>
+            <table>
+                <search base="powermax_rdf_pair_recent_data">
+                    <query>
+                        | dedup array_id, local_volume_name
+                        | table rdf_mode, local_volume_name, local_volume_state,
+                        remote_volume_name, remote_volume_state, volume_config,
+                        rdf_pair_state
+                        | sort array_id, local_volume_name
+                        | rename local_volume_name as "Local Volume",
+                        rdf_mode as "Mode",
+                        local_volume_state as "Local State",
+                        remote_volume_name as "Remote Volume",
+                        remote_volume_state as "Remote State",
+                        volume_config as "Config",
+                        rdf_pair_state as "Pair State",
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - Response Times/R1 R2 stats-->
+    <row>
+        <panel>
+            <title>RDF Response Time (ms)</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(rdf_response_time) by rdfg_number
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>R1 to R2 IOs/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(rdf_r1_r2_ios) by rdfg_number
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>R1 to R2 MBs/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(rdf_r1_r2_mbs) by rdfg_number
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+    <!--Dashboard third row - WP Count-->
+    <row>
+        <panel>
+            <title>Local Write Pending Count</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(local_wp_count) by rdfg_number
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>RDF/A Write Pending Count</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(rdfa_wp_count) by rdfg_number
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+    <!--Dashboard fourth row - Times-->
+    <row>
+        <panel>
+            <title>Average Cycle Size</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(avg_cycle_size) by rdfg_number
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Average Cycle Time</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(avg_cycle_time) by rdfg_number
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Average IO Service Time</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(avg_io_service_time) by rdfg_number
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+</form>

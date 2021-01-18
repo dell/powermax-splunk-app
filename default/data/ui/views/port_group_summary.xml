@@ -1,20 +1,35 @@
-<form>
-    <label>Port Groups</label>
-    <search id="vmax_24hr_data">
-        <query>`vmax_pg` array_id=$array_tok$ port_group_id=$pg_tok$
+<form theme="dark">
+    <label>Port Group Overview &amp; Performance</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_pg`
+            array_id=$array_tok$
+            port_group_id=$pg_tok$
+            | fillnull value=None port_list{}
+            | search port_list{}=$port_tok$
             | fields array_id, port_group_id, percent_busy, ios, avg_io_size,
             mbs, mb_read, mb_written, reads, writes
         </query>
         <earliest>$time_tok.earliest$</earliest>
         <latest>$time_tok.latest$</latest>
     </search>
+
+    <!--Port selection field-->
     <fieldset submitButton="false" autoRun="true">
         <input type="dropdown" token="array_tok" searchWhenChanged="true">
             <label>Array ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_array` | dedup array_id | table array_id | sort
-                    array_id
+                <query>
+                    `powermax_pg`
+                    port_group_id=$pg_tok$
+                    | fillnull value=None port_list{}
+                    | search port_list{}=$port_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -23,12 +38,39 @@
             <fieldForValue>array_id</fieldForValue>
             <default>*</default>
         </input>
+        <input type="dropdown" token="port_tok" searchWhenChanged="true">
+            <label>Dir:Port ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_pg`
+                    array_id=$array_tok$
+                    port_group_id=$pg_tok$
+                    | fillnull value=None port_list{}
+                    | mvexpand port_list{}
+                    | dedup port_list{}
+                    | table port_list{}
+                    | sort port_list{}
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>port_list{}</fieldForLabel>
+            <fieldForValue>port_list{}</fieldForValue>
+            <default>*</default>
+        </input>
         <input type="dropdown" token="pg_tok" searchWhenChanged="true">
             <label>Port Group ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_pg` array_id=$array_tok$ | dedup port_group_id |
-                    table port_group_id | sort port_group_id
+                <query>
+                    `powermax_pg`
+                    array_id=$array_tok$
+                    | fillnull value=None port_list{}
+                    | search port_list{}=$port_tok$
+                    | dedup port_group_id
+                    | table port_group_id
+                    | sort port_group_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -45,15 +87,80 @@
             </default>
         </input>
     </fieldset>
+
+    <!--Dashboard first row - Port Group Summary-->
+    <row>
+        <panel>
+        <title>Port Group Summary</title>
+            <table>
+                <search>
+                    <query>
+                        `powermax_pg`
+                        array_id=$array_tok$
+                        port_group_id=$pg_tok$
+                        | fillnull value=None port_list{}
+                        | search port_list{}=$port_tok$
+                        | head 10000
+                        | dedup array_id, port_group_id
+                        | fillnull value=0 num_of_ports, num_of_masking_views
+                        | table array_id, port_group_id, type, num_of_ports,
+                        port_list{}, num_of_masking_views
+                        | sort array_id, port_group_id
+                        | rename array_id as "Array ID",
+                        port_group_id as "Port Group ID",
+                        type as "Type",
+                        num_of_ports as "# Ports",
+                        port_list{} as "Ports"
+                        num_of_masking_views as "# Masking Views"
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+        <panel>
+            <title>Masking View Links</title>
+            <table>
+                <search>
+                    <query>
+                        `powermax_masking_view`
+                        array_id=$array_tok$
+                        port_group_id=$pg_tok$
+                        | fillnull value=None port_list{}
+                        | search port_list{}=$port_tok$
+                        | head 10000
+                        | dedup port_group_id, masking_view_id
+                        | fillnull value=None host_group_id host_id
+                        | table port_group_id, masking_view_id, host_group_id,
+                        host_id, storage_group_id
+                        | sort port_group_id, masking_view_id
+                        | rename port_group_id as "Port Group ID",
+                        masking_view_id as "Masking View ID",
+                        host_group_id as "Host Group ID",
+                        host_id as "Host ID",
+                        storage_group_id as "Storage Group ID"
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - % Busy/Reads/Writes-->
     <row>
         <panel>
             <title>% Busy</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_busy) by port_group_id
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(percent_busy) by port_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -66,11 +173,13 @@
         <panel>
             <title>Reads/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(reads) by port_group_id usenull=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(reads) by port_group_id usenull=f
                         useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -83,11 +192,13 @@
         <panel>
             <title>Writes/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(writes) by port_group_id usenull=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(writes) by port_group_id usenull=f
                         useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -98,36 +209,38 @@
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - IOs & Percent Busy-->
     <row>
         <panel>
             <title>Host IOs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(ios) by port_group_id usenull=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(ios) by port_group_id usenull=f
                         useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Average IO Size (KB)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(avg_io_size) by port_group_id
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(avg_io_size) by port_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -138,36 +251,38 @@
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard fourth row - Reads & Writes-->
     <row>
         <panel>
             <title>Host MBs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(mbs) by port_group_id usenull=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(mbs) by port_group_id usenull=f
                         useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>MBs Read/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(mb_read) by port_group_id usenull=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(mb_read) by port_group_id usenull=f
                         useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -180,11 +295,13 @@
         <panel>
             <title>MBs Written/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(mb_written) by port_group_id usenull=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(mb_written) by port_group_id usenull=f
                         useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -195,41 +312,5 @@
             </chart>
         </panel>
     </row>
-    <row>
-        <panel>
-            <title>Port Group Summary</title>
-            <table>
-                <search>
-                    <query>`vmax_pg` array_id=$array_tok$
-                        port_group_id=$pg_tok$
-                        | head 10000
-                        | dedup array_id, port_group_id
-                        | eval r_percent_busy=round(percent_busy,2),
-                        r_ios=round(ios,2), r_mbs=round(mbs,2),
-                        r_mb_read=round(mb_read,2),
-                        r_mb_written=round(mb_written,2),
-                        r_reads=round(reads,2),
-                        r_writes=round(writes,2)
-                        | table array_id, port_group_id, type, num_of_ports,
-                        port_list{}, num_of_masking_views,
-                        masking_view{}, r_percent_busy, r_ios, r_mbs,
-                        r_mb_read, r_mb_written, r_reads, r_writes
-                        | sort array_id, port_group_id
-                        | rename array_id as "Array ID", port_group_id as "Port
-                        Group ID", type as Type, num_of_ports as
-                        "# Ports", port_list{} as "Ports", num_of_masking_views
-                        as "# Masking Views", masking_view{} as
-                        "Masking Views", r_percent_busy as "% Busy", r_ios as
-                        "IOs/sec", r_mbs as "MBs/sec", r_mb_read
-                        as "MBs Read/sec", r_mb_written as "MBs Written/sec",
-                        r_reads as "Reads/sec", r_writes as
-                        "Writes/sec"
-                    </query>
-                    <earliest>-15m</earliest>
-                    <latest>now</latest>
-                </search>
-                <option name="drilldown">none</option>
-            </table>
-        </panel>
-    </row>
+
 </form>

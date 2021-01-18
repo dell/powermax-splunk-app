@@ -1,0 +1,319 @@
+<form theme="dark">
+    <label>Masking View Overview &amp; Performance</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_masking_view`
+            array_id=$array_tok$
+            host_group_id=$host_grp_tok$
+            host_id=$host_tok$
+            port_group_id=$pg_tok$
+            storage_group_id=$sg_tok$
+            masking_view_id=$mv_tok$
+            | search port_list{}=$dir_port_tok$
+            | fields array_id, masking_view_id, response_time, host_ios, host_mbs
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+
+    <!--Host selection field-->
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_masking_view`
+                    host_group_id=$host_grp_tok$
+                    host_id=$host_tok$
+                    port_group_id=$pg_tok$
+                    storage_group_id=$sg_tok$
+                    masking_view_id=$mv_tok$
+                    | search port_list{}=$dir_port_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="dir_port_tok" searchWhenChanged="true">
+            <label>Director:Port ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_masking_view`
+                    array_id=$array_tok$
+                    host_group_id=$host_grp_tok$
+                    host_id=$host_tok$
+                    port_group_id=$pg_tok$
+                    storage_group_id=$sg_tok$
+                    masking_view_id=$mv_tok$
+                    | mvexpand port_list{}
+                    | dedup port_list{}
+                    | table port_list{}
+                    | sort port_list{}
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>port_list{}</fieldForLabel>
+            <fieldForValue>port_list{}</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="host_grp_tok" searchWhenChanged="true">
+            <label>Host Group ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_masking_view`
+                    array_id=$array_tok$
+                    port_group_id=$pg_tok$
+                    storage_group_id=$sg_tok$
+                    masking_view_id=$mv_tok$
+                    host_id=$host_tok$
+                    | search port_list{}=$dir_port_tok$
+                    | dedup host_group_id
+                    | table host_group_id
+                    | sort host_group_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>host_group_id</fieldForLabel>
+            <fieldForValue>host_group_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="host_tok" searchWhenChanged="true">
+            <label>Host ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_masking_view`
+                    array_id=$array_tok$
+                    host_group_id=$host_grp_tok$
+                    port_group_id=$pg_tok$
+                    storage_group_id=$sg_tok$
+                    masking_view_id=$mv_tok$
+                    | search port_list{}=$dir_port_tok$
+                    | dedup host_id
+                    | table host_id
+                    | sort host_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>host_id</fieldForLabel>
+            <fieldForValue>host_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="pg_tok" searchWhenChanged="true">
+            <label>Port Group ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_masking_view`
+                    array_id=$array_tok$
+                    host_group_id=$host_grp_tok$
+                    host_id=$host_tok$
+                    storage_group_id=$sg_tok$
+                    masking_view_id=$mv_tok$
+                    | search port_list{}=$dir_port_tok$
+                    | dedup port_group_id
+                    | table port_group_id
+                    | sort port_group_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>port_group_id</fieldForLabel>
+            <fieldForValue>port_group_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="sg_tok" searchWhenChanged="true">
+            <label>Storage Group ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_masking_view`
+                    array_id=$array_tok$
+                    host_group_id=$host_grp_tok$
+                    host_id=$host_tok$
+                    port_group_id=$pg_tok$
+                    masking_view_id=$mv_tok$
+                    | search port_list{}=$dir_port_tok$
+                    | dedup storage_group_id
+                    | table storage_group_id
+                    | sort storage_group_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>storage_group_id</fieldForLabel>
+            <fieldForValue>storage_group_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="mv_tok" searchWhenChanged="true">
+            <label>Masking View ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_masking_view`
+                    array_id=$array_tok$
+                    host_group_id=$host_grp_tok$
+                    host_id=$host_tok$
+                    port_group_id=$pg_tok$
+                    storage_group_id=$sg_tok$
+                    | search port_list{}=$dir_port_tok$
+                    | dedup masking_view_id
+                    | table masking_view_id
+                    | sort masking_view_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>masking_view_id</fieldForLabel>
+            <fieldForValue>masking_view_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+
+    <!--Dashboard first row - MV Summary-->
+    <row>
+        <panel>
+            <title>Masking View Summary</title>
+            <table>
+                <search>
+                    <query>
+                        `powermax_masking_view`
+                        array_id=$array_tok$
+                        host_group_id=$host_grp_tok$
+                        host_id=$host_tok$
+                        port_group_id=$pg_tok$
+                        storage_group_id=$sg_tok$
+                        masking_view_id=$mv_tok$
+                        | search port_list{}=$dir_port_tok$
+                        | dedup array_id, masking_view_id
+                        | table array_id, masking_view_id, port_group_id,
+                        host_group_id, host_id, storage_group_id
+                        | sort array_id, masking_view_id
+                        | rename array_id as "Array ID",
+                        masking_view_id as "Masking View ID",
+                        port_group_id as "Port Group ID",
+                        host_group_id as "Host Group ID",
+                        host_id as "Host ID",
+                        storage_group_id as "Storage Group ID"
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+        <panel>
+            <title>Connection Summary</title>
+            <table>
+                <search>
+                    <query>
+                        `powermax_masking_view_conn`
+                        array_id=$array_tok$
+                        host_group_id=$host_grp_tok$
+                        host_id=$host_tok$
+                        port_group_id=$pg_tok$
+                        storage_group_id=$sg_tok$
+                        dir_port=$dir_port_tok$
+                        masking_view_id=$mv_tok$
+                        | dedup array_id, masking_view_id, volume_id, dir_port
+                        | table volume_id, cap_gb, dir_port, initiator_id,
+                        on_fabric, logged_in
+                        | sort array_id, masking_view_id, volume_id
+                        | rename volume_id as "Volume ID",
+                        cap_gb as "Capacity (GB)",
+                        dir_port as "Director:Port",
+                        initiator_id as "Initiator ID",
+                        on_fabric as "On Fabric",
+                        logged_in as "Logged In"
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - Response Time/Host IO/Host MB-->
+    <row>
+        <panel>
+            <title>Response Time (ms)</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(response_time) by masking_view_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Host IOs/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(host_ios) by masking_view_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Host MBs/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(host_mbs) by masking_view_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+</form>

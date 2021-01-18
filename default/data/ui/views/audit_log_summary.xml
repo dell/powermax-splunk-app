@@ -1,0 +1,320 @@
+<form theme="dark">
+    <label>Audit Logs</label>
+
+    <search id="powermax_recent_data">
+        <query>`powermax_audit`
+            array_id=$array_tok$
+            username=$user_tok$
+            hostname=$host_tok$
+            audit_class=$aclass_tok$
+            application_id=$app_tok$
+            action_code=$action_tok$
+            activity_id=$activity_tok$
+            record_id=$record_tok$
+            | dedup array_id, record_id
+            | fields _time, entry_date_string, array_id, record_id,
+            activity_id, audit_class, username, hostname, application_id,
+            action_code, message
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+
+
+    <!--Second Row - Alert Type Stats-->
+    <!--Third Row - Alert Summary-->
+
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_audit`
+                    username=$user_tok$
+                    hostname=$host_tok$
+                    audit_class=$aclass_tok$
+                    application_id=$app_tok$
+                    action_code=$action_tok$
+                    activity_id=$activity_tok$
+                    record_id=$record_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="user_tok" searchWhenChanged="true">
+            <label>Username</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_audit`
+                    array_id=$array_tok$
+                    hostname=$host_tok$
+                    audit_class=$aclass_tok$
+                    application_id=$app_tok$
+                    action_code=$action_tok$
+                    activity_id=$activity_tok$
+                    record_id=$record_tok$
+                    | fillnull value=None username
+                    | dedup username
+                    | table username
+                    | sort username
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>username</fieldForLabel>
+            <fieldForValue>username</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="host_tok" searchWhenChanged="true">
+            <label>Host ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_audit`
+                    array_id=$array_tok$
+                    username=$user_tok$
+                    audit_class=$aclass_tok$
+                    application_id=$app_tok$
+                    action_code=$action_tok$
+                    activity_id=$activity_tok$
+                    record_id=$record_tok$
+                    | dedup hostname
+                    | table hostname
+                    | sort hostname
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>hostname</fieldForLabel>
+            <fieldForValue>hostname</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="aclass_tok" searchWhenChanged="true">
+            <label>Audit Class</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_audit`
+                    array_id=$array_tok$
+                    username=$user_tok$
+                    hostname=$host_tok$
+                    application_id=$app_tok$
+                    action_code=$action_tok$
+                    activity_id=$activity_tok$
+                    record_id=$record_tok$
+                    | dedup audit_class
+                    | table audit_class
+                    | sort audit_class
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>audit_class</fieldForLabel>
+            <fieldForValue>audit_class</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="app_tok" searchWhenChanged="true">
+            <label>Application ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_audit`
+                    array_id=$array_tok$
+                    username=$user_tok$
+                    hostname=$host_tok$
+                    audit_class=$aclass_tok$
+                    action_code=$action_tok$
+                    activity_id=$activity_tok$
+                    record_id=$record_tok$
+                    | dedup application_id
+                    | table application_id
+                    | sort application_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>application_id</fieldForLabel>
+            <fieldForValue>application_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="action_tok" searchWhenChanged="true">
+            <label>Action Code</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_audit`
+                    array_id=$array_tok$
+                    username=$user_tok$
+                    hostname=$host_tok$
+                    audit_class=$aclass_tok$
+                    application_id=$app_tok$
+                    activity_id=$activity_tok$
+                    record_id=$record_tok$
+                    | dedup action_code
+                    | table action_code
+                    | sort action_code
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>action_code</fieldForLabel>
+            <fieldForValue>action_code</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="activity_tok" searchWhenChanged="true">
+            <label>Activity ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_audit`
+                    array_id=$array_tok$
+                    username=$user_tok$
+                    hostname=$host_tok$
+                    audit_class=$aclass_tok$
+                    application_id=$app_tok$
+                    action_code=$action_tok$
+                    record_id=$record_tok$
+                    | dedup activity_id
+                    | table activity_id
+                    | sort activity_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>activity_id</fieldForLabel>
+            <fieldForValue>activity_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="record_tok" searchWhenChanged="true">
+            <label>Record ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_audit`
+                    array_id=$array_tok$
+                    username=$user_tok$
+                    hostname=$host_tok$
+                    audit_class=$aclass_tok$
+                    application_id=$app_tok$
+                    action_code=$action_tok$
+                    activity_id=$activity_tok$
+                    | dedup record_id
+                    | table record_id
+                    | sort record_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>record_id</fieldForLabel>
+            <fieldForValue>record_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-1h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+
+    <!--First Row - Audit Log Stats -->
+    <row>
+        <panel>
+            <chart>
+                <title>Audit Logs</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by array_id</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <chart>
+                <title>Audit Class</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by audit_class</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <chart>
+                <title>Users</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by username</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+    <!--Second Row - Audit Log Stats -->
+
+    <row>
+        <panel>
+            <chart>
+                <title>Hostnames</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by hostname</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <chart>
+                <title>Applications</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by application_id</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <chart>
+                <title>Actions</title>
+                <search base="powermax_recent_data">
+                    <query>stats count by action_code</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+    <!--Second Row - Audit Log Summary -->
+    <row>
+        <panel>
+            <table>
+                <search base="powermax_recent_data">
+                    <query>
+                        | table _time, entry_date_string, array_id, record_id,
+                        activity_id, audit_class, username, hostname,
+                        application_id, action_code, message
+                        | sort -_time, array_id, record_id
+                        | fields - _time
+                        | rename entry_date_string as "Date",
+                        array_id as "Array ID",
+                        record_id as "Record ID",
+                        activity_id as "Activity ID",
+                        audit_class as "Audit Class",
+                        username as "Username",
+                        hostname as "Hostname",
+                        application_id as "Application ID",
+                        action_code as "Action Code",
+                        message as "Message"
+                    </query>
+                </search>
+                <option name="count">10</option>
+                <option name="drilldown">none</option>
+                <option name="refresh.display">progressbar</option>
+            </table>
+        </panel>
+    </row>
+</form>

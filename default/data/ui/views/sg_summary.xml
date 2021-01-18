@@ -1,32 +1,49 @@
-<form>
+<form theme="dark">
     <label>Storage Group Summary</label>
-    <search id="vmax_sg_recent_data">
-        <query>`vmax_sg` array_id=$array_tok$ srp=$srp_tok$
-            storage_group_id=$sg_tok$ | head 10000 | dedup array_id,
-            srp, storage_group_id | fields array_id, srp, storage_group_id,
-            info_alert_count, warning_alert_count,
-            critical_alert_count, slo_compliance, type, slo, workload,
-            device_emulation, allocated_capacity,
-            num_of_vols, unprotected, cap_gb, num_of_masking_views
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_sg_recent_data">
+        <query>
+            `powermax_sg`
+            array_id=$array_tok$
+            srp=$srp_tok$
+            storage_group_id=$sg_tok$
+            service_level=$sl_tok$
+            workload=$wl_tok$
+            device_emulation=$emu_tok$
+            type=$type_tok$
+            compression=$compression_tok$
+            slo_compliance=$compliance_tok$
+            | head 10000
+            | dedup array_id, srp, storage_group_id
+            | fields array_id, srp, storage_group_id, type,
+            device_emulation, compression, unprotected, service_level,
+            slo_compliance, workload, cap_gb, num_of_vols, num_of_snapshots,
+            num_of_masking_views, num_of_parent_sgs, num_of_child_sgs
         </query>
         <earliest>-15m</earliest>
         <latest>now</latest>
     </search>
-    <search id="vmax_24hr_data">
-        <query>`vmax_sg` array_id=$array_tok$ srp=$srp_tok$
-            storage_group_id=$sg_tok$ | fields array_id, srp,
-            storage_group_id, allocated_capacity, num_of_vols
-        </query>
-        <earliest>$time_tok.earliest$</earliest>
-        <latest>$time_tok.latest$</latest>
-    </search>
+
+    <!--Storage Group selection field-->
     <fieldset submitButton="false" autoRun="true">
         <input type="dropdown" token="array_tok" searchWhenChanged="true">
             <label>Array ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_array` | dedup array_id | table array_id | sort
-                    array_id
+                <query>
+                    `powermax_sg`
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -35,12 +52,23 @@
             <fieldForValue>array_id</fieldForValue>
             <default>*</default>
         </input>
+
         <input type="dropdown" token="srp_tok" searchWhenChanged="true">
             <label>SRP ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_sg` array_id=$array_tok$ | dedup srp | table srp |
-                    sort srp
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup srp
+                    | table srp
+                    | sort srp
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -49,13 +77,23 @@
             <fieldForValue>srp</fieldForValue>
             <default>*</default>
         </input>
+
         <input type="dropdown" token="sg_tok" searchWhenChanged="true">
             <label>Storage Group ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_sg` array_id=$array_tok$ srp=$srp_tok$ | dedup
-                    storage_group_id | table storage_group_id |
-                    sort storage_group_id
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup storage_group_id
+                    | table storage_group_id
+                    | sort storage_group_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -64,6 +102,157 @@
             <fieldForValue>storage_group_id</fieldForValue>
             <default>*</default>
         </input>
+
+        <input type="dropdown" token="sl_tok" searchWhenChanged="true">
+            <label>Service Level</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup service_level
+                    | table service_level
+                    | sort service_level
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>service_level</fieldForLabel>
+            <fieldForValue>service_level</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="wl_tok" searchWhenChanged="true">
+            <label>Workload Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup workload
+                    | table workload
+                    | sort workload
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>workload</fieldForLabel>
+            <fieldForValue>workload</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="emu_tok" searchWhenChanged="true">
+            <label>Emulation</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup device_emulation
+                    | table device_emulation
+                    | sort device_emulation
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>device_emulation</fieldForLabel>
+            <fieldForValue>device_emulation</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="type_tok" searchWhenChanged="true">
+            <label>Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup type
+                    | table type
+                    | sort type
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>type</fieldForLabel>
+            <fieldForValue>type</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="compression_tok" searchWhenChanged="true">
+            <label>Compression</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup compression
+                    | table compression
+                    | sort compression
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>compression</fieldForLabel>
+            <fieldForValue>compression</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="compliance_tok" searchWhenChanged="true">
+            <label>Compliance</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    | dedup slo_compliance
+                    | table slo_compliance
+                    | sort slo_compliance
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>slo_compliance</fieldForLabel>
+            <fieldForValue>slo_compliance</fieldForValue>
+            <default>*</default>
+        </input>
+
         <input type="time" token="time_tok" searchWhenChanged="true">
             <label>Time Frame</label>
             <default>
@@ -72,175 +261,77 @@
             </default>
         </input>
     </fieldset>
+
+    <!--Dashboard first row - SG Compliance-->
     <row>
         <panel>
             <single>
-                <search base="vmax_sg_recent_data">
+                <search base="powermax_sg_recent_data">
                     <query>spath slo_compliance | search slo_compliance=NONE |
                         stats count(slo_compliance)
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0x65a637","0x65a637"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">No Compliance Storage Groups</option>
                 <option name="useColors">1</option>
-                <drilldown>
-                    <link target="_self">search?q=`vmax_sg`
-                        array_id=$array_tok$ srp=$srp_tok$
-                        storage_group_id=$sg_tok$ slo_compliance=NONE | head
-                        10000 | dedup array_id, srp, storage_group_id | table
-                        array_id, srp, storage_group_id, slo_compliance | sort
-                        array_id, srp, storage_group_id | rename array_id as
-                        "Array ID", srp as "SRP ID", storage_group_id as
-                        "Storage Group ID", slo_compliance as "Service Level
-                        Compliance"&amp;earliest=-15m&amp;latest=now
-                    </link>
-                </drilldown>
             </single>
         </panel>
         <panel>
             <single>
-                <search base="vmax_sg_recent_data">
+                <search base="powermax_sg_recent_data">
                     <query>spath slo_compliance | search slo_compliance=STABLE
                         | stats count(slo_compliance)
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0xd93f3c","0x65a637"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Stable Storage Groups</option>
                 <option name="useColors">1</option>
-                <drilldown>
-                    <link target="_self">search?q=`vmax_sg`
-                        array_id=$array_tok$ srp=$srp_tok$
-                        storage_group_id=$sg_tok$ slo_compliance=Stable | head
-                        10000 | dedup array_id, srp, storage_group_id | table
-                        array_id, srp, storage_group_id, slo_compliance | sort
-                        array_id, srp, storage_group_id | rename array_id as
-                        "Array ID", srp as "SRP ID", storage_group_id as
-                        "Storage Group ID", slo_compliance as "Service Level
-                        Compliance"&amp;earliest=-15m&amp;latest=now
-                    </link>
-                </drilldown>
             </single>
         </panel>
         <panel>
             <single>
-                <search base="vmax_sg_recent_data">
+                <search base="powermax_sg_recent_data">
                     <query>spath slo_compliance | search
                         slo_compliance=MARGINAL | stats count(slo_compliance)
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0x65a637","0xf58f39"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Marginal Storage Groups</option>
                 <option name="useColors">1</option>
-                <drilldown>
-                    <link target="_self">search?q=`vmax_sg`
-                        array_id=$array_tok$ srp=$srp_tok$
-                        storage_group_id=$sg_tok$ slo_compliance=Marginal |
-                        head 10000 | dedup array_id, srp, storage_group_id |
-                        table array_id, srp, storage_group_id, slo_compliance |
-                        sort array_id, srp, storage_group_id | rename array_id
-                        as "Array ID", srp as "SRP ID", storage_group_id as
-                        "Storage Group ID", slo_compliance as "Service Level
-                        Compliance"&amp;earliest=-15m&amp;latest=now
-                    </link>
-                </drilldown>
             </single>
         </panel>
         <panel>
             <single>
-                <search base="vmax_sg_recent_data">
+                <search base="powermax_sg_recent_data">
                     <query>spath slo_compliance | search
                         slo_compliance=CRITICAL | stats count(slo_compliance)
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Critical Storage Groups</option>
                 <option name="useColors">1</option>
-                <drilldown>
-                    <link target="_self">search?q=`vmax_sg`
-                        array_id=$array_tok$ srp=$srp_tok$
-                        storage_group_id=$sg_tok$ slo_compliance=Critical |
-                        head 10000 | dedup array_id, srp, storage_group_id |
-                        table array_id, srp, storage_group_id, slo_compliance |
-                        sort array_id, srp, storage_group_id | rename array_id
-                        as "Array ID", srp as "SRP ID", storage_group_id as
-                        "Storage Group ID", slo_compliance as "Service Level
-                        Compliance"&amp;earliest=-15m&amp;latest=now
-                    </link>
-                </drilldown>
             </single>
         </panel>
     </row>
+
+    <!--Dashboard second row - SG Profile-->
     <row>
         <panel>
-            <single>
-                <search base="vmax_sg_recent_data">
-                    <query>stats sum(info_alert_count)</query>
-                </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
-                <option name="rangeValues">[0]</option>
-                <option name="underLabel">Info Storage Group Alerts</option>
-                <option name="useColors">1</option>
-                <drilldown>
-                    <link target="_blank">/app/Dell-EMC-app-VMAX/vmax_alerts
-                    </link>
-                </drilldown>
-            </single>
-        </panel>
-        <panel>
-            <single>
-                <search base="vmax_sg_recent_data">
-                    <query>stats sum(warning_alert_count)</query>
-                </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <option name="rangeColors">["0x65a637","0xf58f39"]</option>
-                <option name="rangeValues">[0]</option>
-                <option name="underLabel">Warning Storage Group Alerts</option>
-                <option name="useColors">1</option>
-                <drilldown>
-                    <link target="_blank">/app/Dell-EMC-app-VMAX/vmax_alerts
-                    </link>
-                </drilldown>
-            </single>
-        </panel>
-        <panel>
-            <single>
-                <search base="vmax_sg_recent_data">
-                    <query>stats sum(critical_alert_count)</query>
-                </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
-                <option name="rangeValues">[0]</option>
-                <option name="underLabel">Critical Storage Group Alerts
-                </option>
-                <option name="useColors">1</option>
-                <drilldown>
-                    <link target="_blank">/app/Dell-EMC-app-VMAX/vmax_alerts
-                    </link>
-                </drilldown>
-            </single>
-        </panel>
-    </row>
-    <row>
-        <panel>
-            <title>Storage Group Types</title>
+            <title>Type Profile</title>
             <chart>
-                <search base="vmax_sg_recent_data">
+                <search base="powermax_sg_recent_data">
                     <query>search type | stats count by type</query>
                 </search>
                 <option name="charting.chart">pie</option>
@@ -248,19 +339,21 @@
             </chart>
         </panel>
         <panel>
-            <title>Storage Group Service Levels</title>
+            <title>Service Level Profile</title>
             <chart>
-                <search base="vmax_sg_recent_data">
-                    <query>search slo | stats count by slo</query>
+                <search base="powermax_sg_recent_data">
+                    <query>search service_level | fillnull value=NONE| stats
+                        count by service_level
+                    </query>
                 </search>
                 <option name="charting.chart">pie</option>
                 <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
-            <title>Storage Group Workloads</title>
+            <title>Workload Profile</title>
             <chart>
-                <search base="vmax_sg_recent_data">
+                <search base="powermax_sg_recent_data">
                     <query>search workload | stats count by workload</query>
                 </search>
                 <option name="charting.chart">pie</option>
@@ -268,9 +361,9 @@
             </chart>
         </panel>
         <panel>
-            <title>Storage Group Device Emulation</title>
+            <title>Device Emulation Profile</title>
             <chart>
-                <search base="vmax_sg_recent_data">
+                <search base="powermax_sg_recent_data">
                     <query>search device_emulation | stats count by
                         device_emulation
                     </query>
@@ -280,76 +373,38 @@
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - SG Summary-->
     <row>
         <panel>
-            <title>Storage Group Allocated Capacity (GB)</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(allocated_capacity) by
-                        storage_group_id usenull=f useother=f
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-                <option name="refresh.display">progressbar</option>
-            </chart>
-        </panel>
-        <panel>
-            <title>Storage Group Volume Count</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(num_of_vols) by storage_group_id
-                        usenull=f useother=f
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-                <option name="refresh.display">progressbar</option>
-            </chart>
-        </panel>
-    </row>
-    <row>
-        <panel>
-            <title>Storage Group Summary</title>
             <table>
-                <search base="vmax_sg_recent_data">
+                <search base="powermax_sg_recent_data">
                     <query>
-                        | eval round_allocated_capacity =
-                        round(allocated_capacity, 2), round_info_alert_count =
-                        round(info_alert_count, 0), round_warning_alert_count =
-                        round(warning_alert_count, 0),
-                        round_critical_alert_count =
-                        round(critical_alert_count, 0)
                         | table array_id, srp, storage_group_id, type,
-                        device_emulation, unprotected, slo, workload,
-                        slo_compliance, cap_gb, round_allocated_capacity,
-                        num_of_vols, num_of_masking_views,
-                        round_info_alert_count, round_warning_alert_count,
-                        round_critical_alert_count
+                        device_emulation, compression, unprotected,
+                        service_level,
+                        slo_compliance, workload, cap_gb, num_of_vols,
+                        num_of_snapshots,
+                        num_of_masking_views, num_of_parent_sgs,
+                        num_of_child_sgs
+                        | fillnull value=NONE
                         | sort array_id, storage_group_id
-                        | rename array_id as "Array ID", srp as "SRP ID",
+                        | rename array_id as "Array ID",
+                        srp as "SRP ID",
                         storage_group_id as "Storage Group ID",
-                        slo_compliance as "SLO Compliance", type as "Type",
+                        type as "Type",
                         device_emulation as "Device Emulation",
-                        unprotected as Unprotected, cap_gb as "Capcity (GB)",
-                        round_allocated_capacity as "Allocated
-                        Capacity", num_of_vols as "Number of Volumes",
-                        num_of_masking_views as "Number of Masking
-                        Views", round_info_alert_count as "Info Alerts",
-                        round_warning_alert_count as "Warning Alerts",
-                        round_critical_alert_count as "Critical Alerts", slo as
-                        "Service Level", workload as "Workload
-                        Type"
+                        compression as "Compression",
+                        unprotected as "Unprotected",
+                        service_level as "Service Level",
+                        slo_compliance as "Compliance",
+                        workload as "Workload Type",
+                        cap_gb as "Capacity (GB)",
+                        num_of_vols as "Volumes",
+                        num_of_snapshots as "Snapshots",
+                        num_of_masking_views as "Masking Views",
+                        num_of_parent_sgs as "Parent SGs",
+                        num_of_child_sgs as "Child SGs"
                     </query>
                 </search>
                 <option name="drilldown">none</option>

@@ -1,0 +1,273 @@
+<form theme="dark">
+    <label>Metro DR Overview</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_recent_data">
+        <query>
+            `powermax_metro_dr`
+            array_id=$array_tok$
+            dr_rdf_mode=$mode_tok$
+            valid=$valid_tok$
+            environment_state=$env_tok$
+            dr_link_state=$dr_state_tok$
+            metro_link_state=$metro_state_tok$
+            name=$name_tok$
+            | fields array_id, name, valid, environment_state, environment_exempt,
+            dr_rdf_mode, dr_link_state, dr_exempt, metro_link_state, metro_exempt,
+            capacity_gb
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_metro_dr`
+            array_id=$array_tok$
+            dr_rdf_mode=$mode_tok$
+            valid=$valid_tok$
+            environment_state=$env_tok$
+            dr_link_state=$dr_state_tok$
+            metro_link_state=$metro_state_tok$
+            name=$name_tok$
+            | fields array_id, name, capacity_gb
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+
+    <!--Metro DR selection field-->
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_metro_dr`
+                    dr_rdf_mode=$mode_tok$
+                    valid=$valid_tok$
+                    environment_state=$env_tok$
+                    dr_link_state=$dr_state_tok$
+                    metro_link_state=$metro_state_tok$
+                    name=$name_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="mode_tok" searchWhenChanged="true">
+            <label>DR RDF Mode</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_metro_dr`
+                    array_id=$array_tok$
+                    valid=$valid_tok$
+                    environment_state=$env_tok$
+                    dr_link_state=$dr_state_tok$
+                    metro_link_state=$metro_state_tok$
+                    name=$name_tok$
+                    | dedup dr_rdf_mode
+                    | table dr_rdf_mode
+                    | sort dr_rdf_mode
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>dr_rdf_mode</fieldForLabel>
+            <fieldForValue>dr_rdf_mode</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="valid_tok" searchWhenChanged="true">
+            <label>Valid</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_metro_dr`
+                    array_id=$array_tok$
+                    dr_rdf_mode=$mode_tok$
+                    environment_state=$env_tok$
+                    dr_link_state=$dr_state_tok$
+                    metro_link_state=$metro_state_tok$
+                    name=$name_tok$
+                    | dedup valid
+                    | table valid
+                    | sort valid
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>valid</fieldForLabel>
+            <fieldForValue>valid</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="env_tok" searchWhenChanged="true">
+            <label>Environment State</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_metro_dr`
+                    array_id=$array_tok$
+                    dr_rdf_mode=$mode_tok$
+                    valid=$valid_tok$
+                    dr_link_state=$dr_state_tok$
+                    metro_link_state=$metro_state_tok$
+                    name=$name_tok$
+                    | dedup environment_state
+                    | table environment_state
+                    | sort environment_state
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>environment_state</fieldForLabel>
+            <fieldForValue>environment_state</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="dr_state_tok" searchWhenChanged="true">
+            <label>DR Link State</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_metro_dr`
+                    array_id=$array_tok$
+                    dr_rdf_mode=$mode_tok$
+                    valid=$valid_tok$
+                    environment_state=$env_tok$
+                    metro_link_state=$metro_state_tok$
+                    name=$name_tok$
+                    | dedup dr_link_state
+                    | table dr_link_state
+                    | sort dr_link_state
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>dr_link_state</fieldForLabel>
+            <fieldForValue>dr_link_state</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="metro_state_tok" searchWhenChanged="true">
+            <label>Metro Link State</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_metro_dr`
+                    array_id=$array_tok$
+                    dr_rdf_mode=$mode_tok$
+                    valid=$valid_tok$
+                    environment_state=$env_tok$
+                    dr_link_state=$dr_state_tok$
+                    name=$name_tok$
+                    | dedup metro_link_state
+                    | table metro_link_state
+                    | sort metro_link_state
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>metro_link_state</fieldForLabel>
+            <fieldForValue>metro_link_state</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="name_tok" searchWhenChanged="true">
+            <label>Name</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_metro_dr`
+                    array_id=$array_tok$
+                    dr_rdf_mode=$mode_tok$
+                    valid=$valid_tok$
+                    environment_state=$env_tok$
+                    dr_link_state=$dr_state_tok$
+                    metro_link_state=$metro_state_tok$
+                    | dedup name
+                    | table name
+                    | sort name
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>name</fieldForLabel>
+            <fieldForValue>name</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+
+    <!--Dashboard first row - Metro DR Summary-->
+    <row>
+        <panel>
+            <table>
+                <search base="powermax_recent_data">
+                    <query>
+                        | dedup array_id, name
+                        | table array_id, name, valid,
+                        environment_state, environment_exempt,
+                        dr_rdf_mode, dr_link_state, dr_exempt,
+                        metro_link_state, metro_exempt, capacity_gb
+                        | sort array_id, name
+                        | rename array_id as "Array ID",
+                        name as "Name",
+                        valid as "Valid",
+                        environment_state as "Environment State",
+                        environment_exempt as "Environment Exempt",
+                        dr_rdf_mode as "DR RDF Mode",
+                        dr_link_state as "DR Link State",
+                        dr_exempt as "DR Exempt",
+                        metro_link_state as "Metro Link State",
+                        metro_exempt as "Metro Exempt",
+                        capacity_gb as "Capacity (GB)"
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - Capacity Trends-->
+    <row>
+        <panel>
+            <title>Capacity Trend (GB)</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(capacity_gb) by name
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+</form>

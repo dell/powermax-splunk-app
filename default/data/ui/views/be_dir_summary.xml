@@ -1,22 +1,40 @@
-<form>
-    <label>BE Directors</label>
-    <search id="vmax_24hr_data">
-        <query>`vmax_dir` array_id=$array_tok$ director_type=BE
+<form theme="dark">
+    <label>Back End Directors</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_dir`
+            director_type=BE
+            array_id=$array_tok$
             director_id=$dir_tok$
-            | fields array_id, director_id, percent_busy, percent_non_io_busy,
-            ios, mbs, mb_read, mb_written, reqs,
-            read_reqs, write_reqs, sys_call_count, avg_time_per_sys_call
+            availability=$avail_tok$
+            director_slot_number=$slot_tok$
+            | rex field=array_id "(?&lt;array_short&gt;.{3}$)"
+            | eval array_dir = array_short . ":" . director_id
+            | fields array_id, array_dir, director_id, percent_busy,
+            percent_non_io_busy, ios, mbs, mb_read, mb_written, reqs,
+            read_reqs, write_reqs, sys_call_count
         </query>
         <earliest>$time_tok.earliest$</earliest>
         <latest>$time_tok.latest$</latest>
     </search>
+
+    <!--BE Director selection field-->
     <fieldset submitButton="false" autoRun="true">
         <input type="dropdown" token="array_tok" searchWhenChanged="true">
             <label>Array ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_array` | dedup array_id | table array_id | sort
-                    array_id
+                <query>
+                    `powermax_dir`
+                    director_type=BE
+                    director_id=$dir_tok$
+                    availability=$avail_tok$
+                    director_slot_number=$slot_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -25,13 +43,61 @@
             <fieldForValue>array_id</fieldForValue>
             <default>*</default>
         </input>
-        <input type="dropdown" token="dir_tok" searchWhenChanged="true">
-            <label>BE Director ID</label>
+        <input type="dropdown" token="avail_tok" searchWhenChanged="true">
+            <label>Availability</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_dir` array_id=$array_tok$ director_type=BE | dedup
-                    director_id | table director_id | sort
-                    director_id
+                <query>
+                    `powermax_dir`
+                    director_type=BE
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    director_slot_number=$slot_tok$
+                    | dedup availability
+                    | table availability
+                    | sort availability
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>availability</fieldForLabel>
+            <fieldForValue>availability</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="slot_tok" searchWhenChanged="true">
+            <label>Director Slot #</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_dir`
+                    director_type=BE
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    availability=$avail_tok$
+                    | dedup director_slot_number
+                    | table director_slot_number
+                    | sort director_slot_number
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>director_slot_number</fieldForLabel>
+            <fieldForValue>director_slot_number</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="dir_tok" searchWhenChanged="true">
+            <label>FE Director ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_dir`
+                    director_type=BE
+                    array_id=$array_tok$
+                    availability=$avail_tok$
+                    director_slot_number=$slot_tok$
+                    | dedup director_id
+                    | table director_id
+                    | sort director_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -48,13 +114,52 @@
             </default>
         </input>
     </fieldset>
+
+    <!--Dashboard first row - Fe Director Summary-->
+    <row>
+        <panel>
+            <table>
+                <search>
+                    <query>
+                        `powermax_dir`
+                        director_type=BE
+                        array_id=$array_tok$
+                        director_id=$dir_tok$
+                        availability=$avail_tok$
+                        director_slot_number=$slot_tok$
+                        | head 1000
+                        | dedup array_id, director_id
+                        | table array_id, director_id, availability,
+                        director_slot_number, director_number,
+                        num_of_ports, num_of_cores
+                        | sort array_id, director_id
+                        | rename array_id as "Array ID",
+                        director_id as "Director ID",
+                        availability as Availability,
+                        director_number as "Director #",
+                        director_slot_number as "Director Slot #",
+                        num_of_ports as "# Ports",
+                        num_of_cores as "# Cores"
+                    </query>
+                    <earliest>-15m</earliest>
+                    <latest>now</latest>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - % Busy-->
     <row>
         <panel>
             <title>% Busy</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_busy) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(percent_busy) by array_dir
+                    </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -67,10 +172,12 @@
         <panel>
             <title>% Non-IO Busy</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_non_io_busy) by director_id
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(percent_non_io_busy) by array_dir
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -81,13 +188,16 @@
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - MBs Read/Written-->
     <row>
         <panel>
             <title>IOs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(ios) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(ios) by array_dir</query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -100,9 +210,10 @@
         <panel>
             <title>MBs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(mbs) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(mbs) by array_dir</query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -115,9 +226,10 @@
         <panel>
             <title>MBs Read/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(mb_read) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(mb_read) by array_dir</query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -130,9 +242,10 @@
         <panel>
             <title>MBs Written/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(mb_written) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(mb_written) by array_dir</query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -143,13 +256,48 @@
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard fourth row - Queue depth & syscall count-->
     <row>
         <panel>
             <title>Requests/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(reqs) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(reqs) by array_dir</query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Read Requests/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(read_reqs) by array_dir</query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Write Requests/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(write_reqs) by array_dir</query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -162,26 +310,10 @@
         <panel>
             <title>SysCall Count/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(sys_call_count) by director_id</query>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(sys_call_count) by array_dir</query>
                 </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-            </chart>
-        </panel>
-        <panel>
-            <title>Average SysCall Time</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(avg_time_per_sys_call) by
-                        director_id
-                    </query>
-                </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -192,50 +324,5 @@
             </chart>
         </panel>
     </row>
-    <row>
-        <panel>
-            <title>BE Director Summary</title>
-            <table>
-                <search>
-                    <query>`vmax_dir` array_id=$array_tok$ director_type=BE
-                        director_id=$dir_tok$
-                        | head 1000
-                        | dedup array_id, director_id
-                        | eval round_percent_busy = round(percent_busy,2),
-                        round_percent_nonio_busy =
-                        round(percent_non_io_busy,2), round_ios = round(ios,2),
-                        round_mbs = round(mbs,2), round_reqs =
-                        round(reqs,2), round_read_reqs = round(read_reqs,2),
-                        round_write_reqs = round(write_reqs,2),
-                        round_sys_call_count = round(sys_call_count,2),
-                        round_avg_time_per_sys_call =
-                        round(avg_time_per_sys_call,2)
-                        | table array_id, director_id, availability,
-                        director_number, director_slot_number,
-                        num_of_ports, num_of_cores, round_percent_busy,
-                        round_percent_nonio_busy, round_ios, round_mbs,
-                        round_reqs, round_read_reqs, round_write_reqs,
-                        round_sys_call_count, round_avg_time_per_sys_call
-                        | sort array_id, director_id
-                        | rename array_id as "Array ID", director_id as
-                        "Director ID", availability as Availability,
-                        director_number as "Director #", director_slot_number
-                        as "Director Slot #", num_of_ports as "#
-                        of Ports", num_of_cores as "# of Cores",
-                        round_percent_busy as "% Busy",
-                        round_percent_nonio_busy as "% Non-IO busy", round_ios
-                        as "IOs/sec", round_mbs as "MBs/sec",
-                        round_reqs as "Reqs/sec", round_read_reqs as "Read
-                        Reqs/sec", round_write_reqs as "Write
-                        Reqs/sec", round_sys_call_count as "Syscall Count/sec",
-                        round_avg_time_per_sys_call as "Avg Time
-                        per SysCall"
-                    </query>
-                    <earliest>-15m</earliest>
-                    <latest>now</latest>
-                </search>
-                <option name="drilldown">none</option>
-            </table>
-        </panel>
-    </row>
+
 </form>
