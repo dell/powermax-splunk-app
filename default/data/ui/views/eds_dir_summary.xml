@@ -1,22 +1,21 @@
-<form>
+<form theme="dark">
     <label>EDS Directors</label>
-    <search id="vmax_24hr_data">
-        <query>`vmax_dir` array_id=$array_tok$ director_type=EDS
-            director_id=$dir_tok$
-            | fields array_id, director_id, percent_busy, random_read_misses,
-            random_write_misses, random_read_miss_mbs,
-            random_write_miss_mbs
-        </query>
-        <earliest>$time_tok.earliest$</earliest>
-        <latest>$time_tok.latest$</latest>
-    </search>
+
+    <!--EDS Director selection field-->
     <fieldset submitButton="false" autoRun="true">
         <input type="dropdown" token="array_tok" searchWhenChanged="true">
             <label>Array ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_array` | dedup array_id | table array_id | sort
-                    array_id
+                <query>
+                    `powermax_dir`
+                    director_type=EDS
+                    director_id=$dir_tok$
+                    availability=$avail_tok$
+                    director_slot_number=$slot_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -25,13 +24,61 @@
             <fieldForValue>array_id</fieldForValue>
             <default>*</default>
         </input>
+        <input type="dropdown" token="avail_tok" searchWhenChanged="true">
+            <label>Availability</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_dir`
+                    director_type=EDS
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    director_slot_number=$slot_tok$
+                    | dedup availability
+                    | table availability
+                    | sort availability
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>availability</fieldForLabel>
+            <fieldForValue>availability</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="slot_tok" searchWhenChanged="true">
+            <label>Director Slot #</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_dir`
+                    director_type=EDS
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    availability=$avail_tok$
+                    | dedup director_slot_number
+                    | table director_slot_number
+                    | sort director_slot_number
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>director_slot_number</fieldForLabel>
+            <fieldForValue>director_slot_number</fieldForValue>
+            <default>*</default>
+        </input>
         <input type="dropdown" token="dir_tok" searchWhenChanged="true">
             <label>EDS Director ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_dir` array_id=$array_tok$ director_type=EDS |
-                    dedup director_id | table director_id | sort
-                    director_id
+                <query>
+                    `powermax_dir`
+                    director_type=EDS
+                    array_id=$array_tok$
+                    availability=$avail_tok$
+                    director_slot_number=$slot_tok$
+                    | dedup director_id
+                    | table director_id
+                    | sort director_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -48,120 +95,32 @@
             </default>
         </input>
     </fieldset>
+
+    <!--Dashboard first row - IM Director Summary-->
     <row>
         <panel>
-            <title>% Busy</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_busy) by director_id</query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-            </chart>
-        </panel>
-        <panel>
-            <title>Random Read Misses/sec</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(random_read_misses) by director_id
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-            </chart>
-        </panel>
-        <panel>
-            <title>Random Write Misses/sec</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(random_write_misses) by director_id
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-            </chart>
-        </panel>
-    </row>
-    <row>
-        <panel>
-            <title>Random Read Miss MBs/sec</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(random_read_miss_mbs) by director_id
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-            </chart>
-        </panel>
-        <panel>
-            <title>Random Write Miss MBs/sec</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(random_write_miss_mbs) by
-                        director_id
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-            </chart>
-        </panel>
-    </row>
-    <row>
-        <panel>
-            <title>EDS Director Summary</title>
             <table>
                 <search>
-                    <query>`vmax_dir` array_id=$array_tok$ director_type=EDS
+                    <query>
+                        `powermax_dir`
+                        director_type=EDS
+                        array_id=$array_tok$
                         director_id=$dir_tok$
-                        | head 1000 | dedup array_id, director_id
-                        | eval r_percent_busy=round(percent_busy,2),
-                        r_random_read_misses=round(random_read_misses,2),
-                        r_random_write_misses=round(random_write_misses,2),
-                        r_random_read_miss_mbs=round(random_read_miss_mbs,2),
-                        r_random_write_miss_mbs=round(random_write_miss_mbs,2)
+                        availability=$avail_tok$
+                        director_slot_number=$slot_tok$
+                        | head 1000
+                        | dedup array_id, director_id
                         | table array_id, director_id, availability,
-                        director_number, director_slot_number,
-                        num_of_ports, num_of_cores, r_percent_busy,
-                        r_random_read_miss_mbs, r_random_read_misses,
-                        r_random_write_miss_mbs, r_random_write_misses
+                        director_slot_number, director_number,
+                        num_of_ports, num_of_cores
                         | sort array_id, director_id
-                        | rename array_id as "Array ID", director_id as
-                        "Director ID", availability as Availability,
-                        director_number as "Director #", director_slot_number
-                        as "Director Slot #", num_of_ports as "#
-                        of Ports", num_of_cores as "# of Cores", r_percent_busy
-                        as "% Busy", r_random_read_miss_mbs as
-                        "Random Read Miss MBs/sec", r_random_read_misses as
-                        "Random Read Misses/sec",
-                        r_random_write_miss_mbs as "Random Write Miss MBs/sec",
-                        r_random_write_misses as "Random Write
-                        Misses/sec"
+                        | rename array_id as "Array ID",
+                        director_id as "Director ID",
+                        availability as Availability,
+                        director_number as "Director #",
+                        director_slot_number as "Director Slot #",
+                        num_of_ports as "# Ports",
+                        num_of_cores as "# Cores",
                     </query>
                     <earliest>-15m</earliest>
                     <latest>now</latest>
@@ -170,4 +129,37 @@
             </table>
         </panel>
     </row>
+
+    <!--Dashboard second row - % Busy and IO service time-->
+    <row>
+        <panel>
+            <title>% Busy</title>
+            <chart>
+                <search>
+                    <query>
+                        `powermax_dir`
+                        director_type=EDS
+                        array_id=$array_tok$
+                        director_id=$dir_tok$
+                        availability=$avail_tok$
+                        director_slot_number=$slot_tok$
+                        | rex field=array_id "(?&lt;array_short&gt;.{3}$)"
+                        | eval array_dir = array_short . ":" . director_id
+                        | timechart avg(percent_busy) by array_dir
+                    </query>
+                    <earliest>$time_tok.earliest$</earliest>
+                    <latest>$time_tok.latest$</latest>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
 </form>

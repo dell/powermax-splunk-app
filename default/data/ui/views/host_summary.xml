@@ -1,35 +1,64 @@
-<form>
-    <label>Hosts</label>
-    <search id="vmax_24hr_data">
-        <query>`vmax_host` array_id=$array_tok$ host_id=$host_tok$
-            | fields array_id, host_id, host_ios, host_mb_reads,
-            host_mb_writes, mbs,
-            reads, writes, read_response_time, write_response_time,
+<form theme="dark">
+    <label>Host Overview &amp; Performance</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_recent_data">
+        <query>
+            `powermax_host`
+            array_id=$array_tok$
+            performance_metrics=$active_tok$
+            type=$type_tok$
+            host_id=$host_tok$
+            | fillnull value=None host_group{} masking_view{}
+            | search host_group{}=$hg_tok$
+            | search masking_view{}=$mv_tok$
+            | dedup array_id, host_id
+            | fields array_id, host_id, type, initiator{}, masking_view{},
+            num_of_host_groups, disabled_flags{}, host_perf_details,
+            enabled_flags{}, port_flags_override, consistent_lun,
+            performance_metrics
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_host`
+            performance_metrics=true
+            array_id=$array_tok$
+            performance_metrics=$active_tok$
+            type=$type_tok$
+            host_id=$host_tok$
+            | fillnull value=None host_group{} masking_view{}
+            | search host_group{}=$hg_tok$
+            | search masking_view{}=$mv_tok$
+            | fields array_id, host_id,
+            reads, read_response_time, writes, write_response_time,
+            host_ios, mbs, host_mb_reads, host_mb_writes,
             sys_call_count
         </query>
         <earliest>$time_tok.earliest$</earliest>
         <latest>$time_tok.latest$</latest>
     </search>
-    <search id="vmax_host_recent_data">
-        <query>`vmax_host` array_id=$array_tok$ host_id=$host_tok$
-            | dedup array_id, host_id
-            | fields array_id, host_id, type, initiator{}, masking_view{},
-            num_of_host_groups, disabled_flags{},
-            enabled_flags{}, port_flags_override, consistent_lun, host_ios,
-            mbs, host_mb_reads, host_mb_writes,
-            reads, writes, response_time, read_response_time,
-            write_response_time, sys_call_count
-        </query>
-        <earliest>-15m</earliest>
-        <latest>now</latest>
-    </search>
+
+    <!--Host selection field-->
     <fieldset submitButton="false" autoRun="true">
         <input type="dropdown" token="array_tok" searchWhenChanged="true">
             <label>Array ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_array` | dedup array_id | table array_id | sort
-                    array_id
+                <query>
+                    `powermax_host`
+                    performance_metrics=$active_tok$
+                    type=$type_tok$
+                    host_id=$host_tok$
+                    | fillnull value=None host_group{} masking_view{}
+                    | search host_group{}=$hg_tok$
+                    | search masking_view{}=$mv_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -38,12 +67,119 @@
             <fieldForValue>array_id</fieldForValue>
             <default>*</default>
         </input>
+        <input type="dropdown" token="active_tok" searchWhenChanged="true">
+            <label>Active</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_host`
+                    array_id=$array_tok$
+                    type=$type_tok$
+                    host_id=$host_tok$
+                    | fillnull value=None host_group{} masking_view{}
+                    | search host_group{}=$hg_tok$
+                    | search masking_view{}=$mv_tok$
+                    | dedup performance_metrics
+                    | table performance_metrics
+                    | sort performance_metrics desc
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>performance_metrics</fieldForLabel>
+            <fieldForValue>performance_metrics</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="type_tok" searchWhenChanged="true">
+            <label>Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_host`
+                    array_id=$array_tok$
+                    performance_metrics=$active_tok$
+                    host_id=$host_tok$
+                    | fillnull value=None host_group{} masking_view{}
+                    | search host_group{}=$hg_tok$
+                    | search masking_view{}=$mv_tok$
+                    | dedup type
+                    | table type
+                    | sort type
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>type</fieldForLabel>
+            <fieldForValue>type</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="hg_tok" searchWhenChanged="true">
+            <label>Host Group</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_host`
+                    array_id=$array_tok$
+                    performance_metrics=$active_tok$
+                    type=$type_tok$
+                    host_id=$host_tok$
+                    | fillnull value=None host_group{} masking_view{}
+                    | search masking_view{}=$mv_tok$
+                    | mvexpand host_group{}
+                    | dedup host_group{}
+                    | table host_group{}
+                    | sort host_group{}
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>host_group{}</fieldForLabel>
+            <fieldForValue>host_group{}</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="mv_tok" searchWhenChanged="true">
+            <label>Masking View</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_host`
+                    array_id=$array_tok$
+                    performance_metrics=$active_tok$
+                    type=$type_tok$
+                    host_id=$host_tok$
+                    | fillnull value=None host_group{} masking_view{}
+                    | search host_group{}=$hg_tok$
+                    | mvexpand masking_view{}
+                    | dedup masking_view{}
+                    | table masking_view{}
+                    | sort masking_view{}
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>masking_view{}</fieldForLabel>
+            <fieldForValue>masking_view{}</fieldForValue>
+            <default>*</default>
+        </input>
+
         <input type="dropdown" token="host_tok" searchWhenChanged="true">
             <label>Host ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_host` array_id=$array_tok$ | dedup host_id | table
-                    host_id | sort host_id
+                <query>
+                    `powermax_host`
+                    array_id=$array_tok$
+                    performance_metrics=$active_tok$
+                    type=$type_tok$
+                    masking_view{}=$mv_tok$
+                    | fillnull value=None host_group{} masking_view{}
+                    | search host_group{}=$hg_tok$
+                    | search masking_view{}=$mv_tok$
+                    | dedup host_id
+                    | table host_id
+                    | sort host_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -52,6 +188,7 @@
             <fieldForValue>host_id</fieldForValue>
             <default>*</default>
         </input>
+
         <input type="time" token="time_tok" searchWhenChanged="true">
             <label>Time Frame</label>
             <default>
@@ -60,15 +197,87 @@
             </default>
         </input>
     </fieldset>
+
+    <!--Dashboard first row - Port Summary-->
     <row>
         <panel>
-            <title>Read Response Time (ms)</title>
+            <table>
+                <search base="powermax_recent_data">
+                    <query>
+                        | fillnull value=None masking_view{}, disabled_flags{},
+                        enabled_flags{} initiator{}
+                        | table array_id, host_id, performance_metrics, type,
+                        initiator{}, masking_view{}, num_of_host_groups,
+                        disabled_flags{}, enabled_flags{}, port_flags_override,
+                        consistent_lun
+                        | sort array_id, host_id, performance_metrics
+                        | rename array_id as "Array ID",
+                        host_id as "Host ID",
+                        performance_metrics as "Active",
+                        type as Type, initiator{} as "Initiator IDs",
+                        masking_view{} as "Masking Views",
+                        num_of_host_groups as "NumberHost Groups",
+                        disabled_flags{} as "Disabled Flags",
+                        enabled_flags{} as "Enabled Flags",
+                        port_flags_override as "Port Flags Override",
+                        consistent_lun as "Consistent Lun"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - Reads/Writes/Response Times-->
+    <row>
+        <panel>
+            <title>Reads/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>| timechart avg(read_response_time) by host_id
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(reads) by host_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Read Response Time (ms)</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(read_response_time) by host_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Writes/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(writes) by host_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -81,28 +290,13 @@
         <panel>
             <title>Write Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>| timechart avg(write_response_time) by host_id
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(write_response_time) by host_id
                         usenull=f useother=f
                     </query>
                 </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-            </chart>
-        </panel>
-        <panel>
-            <title>Host IO/s</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>| timechart avg(host_ios) by host_id usenull=f
-                        useother=f
-                    </query>
-                </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -113,15 +307,19 @@
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - Host IOs/MBs-->
     <row>
         <panel>
-            <title>Host MBs/sec</title>
+            <title>IO/s</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>| timechart avg(mbs) by host_id usenull=f
-                        useother=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(host_ios) by host_id
+                        usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -132,13 +330,15 @@
             </chart>
         </panel>
         <panel>
-            <title>Host MBs Read/Sec</title>
+            <title>MBs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>| timechart avg(host_mb_reads) by host_id usenull=f
-                        useother=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(mbs) by host_id
+                        usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -149,13 +349,34 @@
             </chart>
         </panel>
         <panel>
-            <title>Host MBs Written/sec</title>
+            <title>MBs Read/Sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>| timechart avg(host_mb_writes) by host_id usenull=f
-                        useother=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(host_mb_reads) by host_id
+                        usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>MBs Written/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(host_mb_writes) by host_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -166,49 +387,19 @@
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard fourth row - Syscall Count-->
     <row>
-        <panel>
-            <title>Host Reads/sec</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>| timechart avg(reads) by host_id usenull=f
-                        useother=f
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-            </chart>
-        </panel>
-        <panel>
-            <title>Host Writes/sec</title>
-            <chart>
-                <search base="vmax_24hr_data">
-                    <query>| timechart avg(writes) by host_id usenull=f
-                        useother=f
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">none</option>
-            </chart>
-        </panel>
         <panel>
             <title>Syscall Count/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>| timechart avg(sys_call_count) by host_id usenull=f
-                        useother=f
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(sys_call_count) by host_id
+                        usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -219,66 +410,5 @@
             </chart>
         </panel>
     </row>
-    <row>
-        <panel>
-            <title>Host Summary</title>
-            <table>
-                <search base="vmax_host_recent_data">
-                    <query>
-                        | table array_id, host_id, type, initiator{},
-                        masking_view{}, num_of_host_groups,
-                        disabled_flags{}, enabled_flags{}, port_flags_override,
-                        consistent_lun
-                        | sort array_id, host_id
-                        | rename array_id as "Array ID", host_id as "Host ID",
-                        type as Type, initiator{} as "Initiator
-                        IDs", masking_view{} as "Masking Views",
-                        num_of_host_groups as "Number of Host Groups",
-                        disabled_flags{} as "Disabled Flags", enabled_flags{}
-                        as "Enabled Flags", port_flags_override as
-                        "Port Flags Override", consistent_lun as "Consistent
-                        Lun"
-                    </query>
-                </search>
-                <option name="drilldown">none</option>
-            </table>
-        </panel>
-    </row>
-    <row>
-        <panel>
-            <title>Active Host Summary</title>
-            <table>
-                <search base="vmax_host_recent_data">
-                    <query>| spath host_perf_details | search NOT
-                        host_perf_details=false
-                        | eval r_host_ios=round(host_ios,2),
-                        r_mbs=round(mbs,2),
-                        r_host_mb_reads=round(host_mb_reads,2),
-                        r_host_mb_writes=round(host_mb_writes,2),
-                        r_reads=round(reads,2), r_writes=round(writes,2),
-                        r_response_time=round(response_time,2),
-                        r_read_response_time=round(read_response_time,2),
-                        r_write_response_time=round(write_response_time,2),
-                        r_sys_call_count=round(sys_call_count,2)
-                        | table array_id, host_id, r_host_ios, r_mbs,
-                        r_host_mb_reads, r_host_mb_writes, r_reads,
-                        r_writes,r_response_time, r_read_response_time,
-                        r_write_response_time, r_sys_call_count
-                        | rename array_id as "Array ID", host_id as "Host ID",
-                        r_host_ios as "Host IOs/sec", r_mbs as
-                        "MBs/sec", r_host_mb_reads as "Host MB Reads/sec",
-                        r_host_mb_writes as "Host MB Writes/sec",
-                        r_reads as "Reads/sec", r_writes as "Writes/sec"
-                        ,r_response_time as "Response Time(ms)",
-                        r_read_response_time as "Read Response Time(ms)",
-                        r_write_response_time as "Write Response
-                        Time(ms)", r_sys_call_count as "SysCall Count/sec"
-                    </query>
-                </search>
-                <option name="count">10</option>
-                <option name="drilldown">none</option>
-                <option name="refresh.display">progressbar</option>
-            </table>
-        </panel>
-    </row>
+
 </form>

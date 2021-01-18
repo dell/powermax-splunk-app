@@ -1,62 +1,107 @@
-<form>
+<form theme="dark">
     <label>Overview</label>
-    <search id="vmax_recent_data">
-        <query>`vmax_array` array_id=$array_tok$ | head 1000 | dedup array_id |
-            fields total_usable_cap_gb,
-            total_allocated_cap_gb, total_subscribed_cap_gb,
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_recent_data">
+        <query>
+            `powermax_array` array_id=$array_tok$
+            | head 1000
+            | dedup array_id
+            | rex field=source
+            "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            | search p_src=$u4p_tok$
+            | fields array_id, p_src, model, ucode, device_count,
+            data_encryption, compression, overall_compression_ratio,
+            system_efficiency_overall_efficiency_ratio_to_one,
+            percent_meta_system_used, slo_compliance_no_slo,
             slo_compliance_slo_stable, slo_compliance_slo_marginal,
-            slo_compliance_slo_critical, info_alert_count, warning_alert_count,
-            critical_alert_count, array_id, source,
-            model, ucode, device_count, data_encryption, compression_enabled,
-            overall_compression_ratio, system_meta_data_used_percent,
-            overall_efficiency_ratio, overall_health_score,
-            array_alert_summary_info_acknowledged_count,
-            array_alert_summary_info_unacknowledged_count,
-            array_alert_summary_minor_acknowledged_count,
-            array_alert_summary_minor_unacknowledged_count,
-            array_alert_summary_normal_acknowledged_count,
-            array_alert_summary_normal_unacknowledged_count,
-            array_alert_summary_warning_acknowledged_count,
-            array_alert_summary_warning_unacknowledged_count,
-            array_alert_summary_critical_acknowledged_count,
-            array_alert_summary_critical_unacknowledged_count,
-            array_alert_summary_fatal_acknowledged_count,
-            array_alert_summary_fatal_unacknowledged_count
+            slo_compliance_slo_critical
         </query>
         <earliest>-15m</earliest>
         <latest>now</latest>
     </search>
-    <search id="vmax_24hr_data">
-        <query>`vmax_array` array_id=$array_tok$ | fields host_ios, be_ios,
-            percent_cache_wp, array_id,
-            read_response_time,write_response_time
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_array` array_id=$array_tok$
+            | rex field=source
+            "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            | search p_src=$u4p_tok$
+            | fields array_id, host_ios, be_ios, percent_cache_wp,
+            read_response_time, write_response_time
         </query>
         <earliest>$time_tok.earliest$</earliest>
         <latest>$time_tok.latest$</latest>
     </search>
-    <search id="vmax_sg_24_data">
-        <query>`vmax_sg` array_id=$array_tok$ | fields array_id,
-            storage_group_id, host_ios, read_response_time,
+    <search id="powermax_alert_data">
+        <query>
+            `powermax_alert` array_id=$array_tok$
+            | rex field=source
+            "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            | search p_src=$u4p_tok$
+            | dedup u4v_source, alert_id
+            | fields array_id, severity
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+    <search id="powermax_sg_data">
+        <query>
+            `powermax_sg` array_id=$array_tok$
+            | rex field=source
+            "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            | search p_src=$u4p_tok$
+            | fields array_id, storage_group_id, host_ios, read_response_time,
             write_response_time
         </query>
         <earliest>$time_tok.earliest$</earliest>
         <latest>$time_tok.latest$</latest>
     </search>
-    <search id="vmax_host_24_data">
-        <query>`vmax_host` array_id=$array_tok$ | fields array_id, host_id,
-            host_ios, read_response_time,
+    <search id="powermax_host_data">
+        <query>
+            `powermax_host` array_id=$array_tok$
+            | rex field=source
+            "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            | search p_src=$u4p_tok$
+            | fields array_id, host_id, host_ios, read_response_time,
             write_response_time
         </query>
         <earliest>$time_tok.earliest$</earliest>
         <latest>$time_tok.latest$</latest>
     </search>
+
+    <!--Array selection field-->
     <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="u4p_tok" searchWhenChanged="true">
+            <label>Unisphere Source</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_array` array_id=$array_tok$
+                    | rex field=source
+                    "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+                    | dedup p_src
+                    | table p_src
+                    | sort p_src
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>p_src</fieldForLabel>
+            <fieldForValue>p_src</fieldForValue>
+            <default>*</default>
+        </input>
         <input type="dropdown" token="array_tok" searchWhenChanged="true">
             <label>Array ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_array` | dedup array_id | table array_id | sort
-                    desc
+                <query>
+                    `powermax_array`
+                    | rex field=source
+                    "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+                    | search p_src=$u4p_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort desc
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -73,37 +118,40 @@
             </default>
         </input>
     </fieldset>
+
+    <!--Dashboard first row - Storage Group SLO compliance-->
     <row>
         <panel>
             <single>
-                <search base="vmax_recent_data">
-                    <query>stats sum(slo_compliance_slo_stable)</query>
+                <search base="powermax_recent_data">
+                    <query>stats sum(slo_compliance_no_slo)</query>
                 </search>
-                <option name="colorMode">block</option>
+                <option name="colorMode">none</option>
                 <option name="rangeColors">["0x65a637","0x65a637"]</option>
                 <option name="rangeValues">[0]</option>
-                <option name="underLabel">Stable Storage Groups</option>
+                <option name="underLabel">No Service Level Storage Groups
+                </option>
                 <option name="useColors">1</option>
-                <option name="drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/wlp_compliance
-                    </link>
-                </drilldown>
             </single>
         </panel>
         <panel>
             <single>
-                <search base="vmax_recent_data">
+                <search base="powermax_recent_data">
+                    <query>stats sum(slo_compliance_slo_stable)</query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="rangeColors">["0x65a637","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Stable Storage Groups</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
                     <query>stats sum(slo_compliance_slo_marginal)</query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/wlp_compliance
-                    </link>
-                </drilldown>
+                <option name="colorMode">none</option>
                 <option name="rangeColors">["0x65a637","0xf58f39"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Marginal Storage Groups</option>
@@ -112,16 +160,10 @@
         </panel>
         <panel>
             <single>
-                <search base="vmax_recent_data">
+                <search base="powermax_recent_data">
                     <query>stats sum(slo_compliance_slo_critical)</query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/wlp_compliance
-                    </link>
-                </drilldown>
+                <option name="colorMode">none</option>
                 <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Critical Storage Groups</option>
@@ -129,23 +171,19 @@
             </single>
         </panel>
     </row>
+
+    <!--Dashboard second row - Alert counts-->
     <row>
         <panel>
             <single>
-                <search base="vmax_recent_data">
-                    <query>eval info_sum =
-                        (array_alert_summary_info_acknowledged_count
-                        + array_alert_summary_info_unacknowledged_count)
-                        | fillnull value=0 info_sum
-                        | stats sum(info_sum)
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Info
+                        | stats count
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts
-                    </link>
-                </drilldown>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Info Alert Count</option>
@@ -154,20 +192,14 @@
         </panel>
         <panel>
             <single>
-                <search base="vmax_recent_data">
-                    <query>eval alert_sum =
-                        (array_alert_summary_minor_acknowledged_count +
-                        array_alert_summary_minor_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Minor
+                        | stats count
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts
-                    </link>
-                </drilldown>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Minor Alert Count</option>
@@ -176,20 +208,14 @@
         </panel>
         <panel>
             <single>
-                <search base="vmax_recent_data">
-                    <query>eval alert_sum =
-                        (array_alert_summary_normal_acknowledged_count +
-                        array_alert_summary_normal_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Normal
+                        | stats count
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts
-                    </link>
-                </drilldown>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Normal Alert Count</option>
@@ -198,20 +224,14 @@
         </panel>
         <panel>
             <single>
-                <search base="vmax_recent_data">
-                    <query>eval alert_sum =
-                        (array_alert_summary_warning_acknowledged_count +
-                        array_alert_summary_warning_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Warning
+                        | stats count
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts
-                    </link>
-                </drilldown>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0x65a637","0xf58f39"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Warning Alert Count</option>
@@ -220,20 +240,14 @@
         </panel>
         <panel>
             <single>
-                <search base="vmax_recent_data">
-                    <query>eval alert_sum =
-                        (array_alert_summary_critical_acknowledged_count +
-                        array_alert_summary_critical_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Critical
+                        | stats count
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts
-                    </link>
-                </drilldown>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Critical Alert Count</option>
@@ -242,20 +256,14 @@
         </panel>
         <panel>
             <single>
-                <search base="vmax_recent_data">
-                    <query>eval alert_sum =
-                        (array_alert_summary_fatal_acknowledged_count +
-                        array_alert_summary_fatal_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=FATAL
+                        | stats count
                     </query>
                 </search>
-                <option name="colorMode">block</option>
-                <option name="drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts
-                    </link>
-                </drilldown>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
                 <option name="rangeColors">["0x65a637","0x555"]</option>
                 <option name="rangeValues">[0]</option>
                 <option name="underLabel">Fatal Alert Count</option>
@@ -263,47 +271,48 @@
             </single>
         </panel>
     </row>
+
+    <!--Dashboard third row - PowerMax Summary table-->
     <row>
         <panel>
-            <title>VMAX Summary</title>
             <table>
-                <search base="vmax_recent_data">
+                <search base="powermax_recent_data">
                     <query>
-                        | table array_id, source, model, ucode, device_count,
-                        data_encryption, compression_enabled,
-                        overall_compression_ratio, overall_efficiency_ratio,
-                        overall_health_score,
-                        system_meta_data_used_percent
+                        | table array_id, p_src, model, ucode, device_count,
+                        data_encryption, overall_compression_ratio,
+                        system_efficiency_overall_efficiency_ratio_to_one,
+                        percent_meta_system_used
+                        | fillnull value="-" overall_compression_ratio,
+                        system_efficiency_overall_efficiency_ratio_to_one,
+                        percent_meta_system_used
                         | sort desc array_id
-                        | rename array_id as "Array ID", source as "VMAX
-                        Unisphere Source", model as "VMAX Version",
-                        ucode as "uCode Verison", device_count as "Device
-                        Count", data_encryption as "Data Encrypthon",
-                        compression_enabled as "Compression Enabled",
-                        overall_compression_ratio as "Overall Compression
-                        Ratio", overall_efficiency_ratio as "Overall Efficiency
-                        Ratio", overall_health_score as "Overall
-                        Health Score", system_meta_data_used_percent as "System
-                        Metadata Used (%)"
+                        | rename array_id as "Array ID",
+                        p_src as "Unisphere Source",
+                        model as "Version",
+                        ucode as "uCode Version",
+                        device_count as "Device Count",
+                        data_encryption as "Data Encryption",
+                        overall_compression_ratio as "Compression Ratio",
+                        system_efficiency_overall_efficiency_ratio_to_one as
+                        "Efficiency Ratio",
+                        percent_meta_system_used as "Metadata Used (%)"
                     </query>
                 </search>
-                <option name="drilldown">cell</option>
+                <option name="drilldown">none</option>
                 <option name="percentagesRow">false</option>
                 <option name="rowNumbers">false</option>
                 <option name="totalsRow">false</option>
                 <option name="wrap">true</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/array_summary
-                    </link>
-                </drilldown>
             </table>
         </panel>
     </row>
+
+    <!--Dashboard fourth row - Response Times-->
     <row>
         <panel>
-            <title>VMAX Read Response Time (ms) by VMAX ID</title>
+            <title>PowerMax Read Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
+                <search base="powermax_24hr_data">
                     <query>timechart avg(read_response_time) by array_id
                     </query>
                 </search>
@@ -311,26 +320,21 @@
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
-                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.chart.showDataLabels">none</option>
-                <option name="charting.drilldown">all</option>
+                <option name="charting.drilldown">none</option>
                 <option name="charting.layout.splitSeries">0</option>
                 <option name="charting.legend.labelStyle.overflowMode">
                     ellipsisStart
                 </option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/array_performance
-                    </link>
-                </drilldown>
             </chart>
         </panel>
         <panel>
-            <title>VMAX Write Response Time (ms) by VMAX ID</title>
+            <title>PowerMax Write Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
+                <search base="powermax_24hr_data">
                     <query>timechart avg(write_response_time) by array_id
                     </query>
                 </search>
@@ -338,31 +342,31 @@
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
-                <option name="charting.axisY.scale">linear</option>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.chart.showDataLabels">none</option>
-                <option name="charting.drilldown">all</option>
+                <option name="charting.drilldown">none</option>
                 <option name="charting.layout.splitSeries">0</option>
                 <option name="charting.legend.labelStyle.overflowMode">
                     ellipsisStart
                 </option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/array_performance
-                    </link>
-                </drilldown>
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard fifth row - IO/s and Cache WP-->
     <row>
         <panel>
-            <title>VMAX Host IOs/sec by VMAX ID</title>
+            <title>PowerMax Host IOs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_ios) by array_id | sort desc
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(host_ios) by array_id
+                        | sort desc
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.text">Time</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
@@ -371,22 +375,20 @@
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
+                <option name="charting.drilldown">none</option>
                 <option name="charting.layout.splitSeries">0</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/array_performance
-                    </link>
-                </drilldown>
             </chart>
         </panel>
         <panel>
-            <title>VMAX Backend IOs/sec by VMAX ID</title>
+            <title>PowerMax Backend IOs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(be_ios) by array_id | sort desc
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(be_ios) by array_id
+                        | sort desc
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.text">Time</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
@@ -395,171 +397,155 @@
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/array_performance
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
-            <title>VMAX % Cache WP/sec by VMAX ID</title>
+            <title>PowerMax % Cache WP/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_cache_wp) by array_id | sort
-                        desc
+                <search base="powermax_24hr_data">
+                    <query>
+                        timechart avg(percent_cache_wp) by array_id
+                        | sort desc
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.text">Time</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.text">Percent</option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
                 <option name="charting.axisY.maximumNumber">100</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/array_performance
-                    </link>
-                </drilldown>
+                <option name="charting.axisY.minimumNumber">0</option>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard sixth row - SG Performance-->
     <row>
         <panel>
-            <title>SG Read Response Time (ms) by SG ID</title>
+            <title>SG Host IOs/sec</title>
             <chart>
-                <search base="vmax_sg_24_data">
-                    <query>timechart avg(read_response_time) by
-                        storage_group_id usenull=f useother=f
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/sg_performance
-                    </link>
-                </drilldown>
-            </chart>
-        </panel>
-        <panel>
-            <title>SG Write Response Time (ms) by SG ID</title>
-            <chart>
-                <search base="vmax_sg_24_data">
-                    <query>timechart avg(write_response_time) by
-                        storage_group_id usenull=f useother=f
-                    </query>
-                </search>
-                <option name="charting.axisTitleX.visibility">collapsed
-                </option>
-                <option name="charting.axisTitleY.visibility">collapsed
-                </option>
-                <option name="charting.chart">line</option>
-                <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/sg_performance
-                    </link>
-                </drilldown>
-            </chart>
-        </panel>
-        <panel>
-            <title>SG Host IOs/sec by SG ID</title>
-            <chart>
-                <search base="vmax_sg_24_data">
-                    <query>timechart avg(host_ios) by storage_group_id
+                <search base="powermax_sg_data">
+                    <query>
+                        timechart avg(host_ios) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/sg_performance
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>SG Read Response Time (ms)</title>
+            <chart>
+                <search base="powermax_sg_data">
+                    <query>
+                        timechart avg(read_response_time) by storage_group_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>SG Write Response Time (ms)</title>
+            <chart>
+                <search base="powermax_sg_data">
+                    <query>
+                        timechart avg(write_response_time) by storage_group_id
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard seventh row - Host Performance-->
     <row>
         <panel>
-            <title>Host Read Response Time (ms) by Host ID</title>
+            <title>Host IO/s</title>
             <chart>
-                <search base="vmax_host_24_data">
-                    <query>| timechart avg(read_response_time) by host_id
+                <search base="powermax_host_data">
+                    <query>
+                        | timechart avg(host_ios) by host_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
-            <title>Host Write Response Time (ms) by Host ID</title>
+            <title>Host Read Response Time (ms)</title>
             <chart>
-                <search base="vmax_host_24_data">
-                    <query>| timechart avg(write_response_time) by host_id
+                <search base="powermax_host_data">
+                    <query>
+                        | timechart avg(read_response_time) by host_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
-            <title>Host IO/s by Host ID</title>
+            <title>Host Write Response Time (ms)</title>
             <chart>
-                <search base="vmax_host_24_data">
-                    <query>| timechart avg(host_ios) by host_id usenull=f
-                        useother=f
+                <search base="powermax_host_data">
+                    <query>
+                        | timechart avg(write_response_time) by host_id
+                        usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
     </row>
+
 </form>

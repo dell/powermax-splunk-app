@@ -1,0 +1,335 @@
+<form theme="dark">
+    <label>Snapshot Policy Overview</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_recent_data">
+        <query>
+            `powermax_snap_policy`
+            array_id=$array_tok$
+            secure=$secure_tok$
+            suspended=$suspended_tok$
+            snapshot_policy_name=$name_tok$
+            policy_type=$policy_type_tok$
+            provider_name=$provider_tok$
+            | fields array_id, snapshot_policy_name, provider_name, policy_type,
+            secure, suspended, interval_minutes, offset_minutes, snapshot_count,
+            last_time_used, snapshot_count, storage_group_count,
+            compliance_count_warning, compliance_count_critical
+        </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+
+    <!--Snapshot Policy selection field-->
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_snap_policy`
+                    secure=$secure_tok$
+                    suspended=$suspended_tok$
+                    snapshot_policy_name=$name_tok$
+                    policy_type=$policy_type_tok$
+                    provider_name=$provider_tok$
+                    | fillnull value=None provider_name
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="policy_type_tok" searchWhenChanged="true">
+            <label>Policy Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_snap_policy`
+                    array_id=$array_tok$
+                    suspended=$suspended_tok$
+                    snapshot_policy_name=$name_tok$
+                    provider_name=$provider_tok$
+                    | dedup policy_type
+                    | table policy_type
+                    | sort policy_type
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>policy_type</fieldForLabel>
+            <fieldForValue>policy_type</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="provider_tok" searchWhenChanged="true">
+            <label>Provider Name</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_snap_policy`
+                    array_id=$array_tok$
+                    suspended=$suspended_tok$
+                    snapshot_policy_name=$name_tok$
+                    policy_type=$policy_type_tok$
+                    | dedup provider_name
+                    | table provider_name
+                    | sort provider_name
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>provider_name</fieldForLabel>
+            <fieldForValue>provider_name</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="secure_tok" searchWhenChanged="true">
+            <label>Secure</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_snap_policy`
+                    array_id=$array_tok$
+                    suspended=$suspended_tok$
+                    snapshot_policy_name=$name_tok$
+                    policy_type=$policy_type_tok$
+                    provider_name=$provider_tok$
+                    | dedup secure
+                    | table secure
+                    | sort secure
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>secure</fieldForLabel>
+            <fieldForValue>secure</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="suspended_tok" searchWhenChanged="true">
+            <label>Suspended</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_snap_policy`
+                    array_id=$array_tok$
+                    secure=$secure_tok$
+                    snapshot_policy_name=$name_tok$
+                    policy_type=$policy_type_tok$
+                    provider_name=$provider_tok$
+                    | dedup suspended
+                    | table suspended
+                    | sort suspended
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>suspended</fieldForLabel>
+            <fieldForValue>suspended</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="name_tok" searchWhenChanged="true">
+            <label>Policy Name</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_snap_policy`
+                    array_id=$array_tok$
+                    secure=$secure_tok$
+                    suspended=$suspended_tok$
+                    policy_type=$policy_type_tok$
+                    provider_name=$provider_tok$
+                    | dedup snapshot_policy_name
+                    | table snapshot_policy_name
+                    | sort snapshot_policy_name
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>snapshot_policy_name</fieldForLabel>
+            <fieldForValue>snapshot_policy_name</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+
+    <!--Dashboard first row - Compliance Status-->
+    <row>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | fillnull value=0 compliance_count_warning compliance_count_critical
+                        | search compliance_count_warning=0 AND compliance_count_critical=0
+                        | dedup array_id, snapshot_policy_name
+                        | stats count(snapshot_policy_name)
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0xd93f3c","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Compliant</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | fillnull value=0 compliance_count_warning
+                        | dedup array_id, snapshot_policy_name
+                        | stats sum(compliance_count_warning)
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf58f39"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Compliance Warning</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | fillnull value=0 compliance_count_critical
+                        | dedup array_id, snapshot_policy_name
+                        | stats sum(compliance_count_critical)
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Compliance Critical</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - Secure/Suspended-->
+    <row>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | dedup array_id, snapshot_policy_name
+                        | search secure="true"
+                        | stats count(snapshot_policy_name)
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0xd93f3c","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Secure Policies</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | dedup array_id, snapshot_policy_name
+                        | search secure="false"
+                        | stats count(snapshot_policy_name)
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Unsecure Policies</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | dedup array_id, snapshot_policy_name
+                        | search suspended="false"
+                        | stats count(snapshot_policy_name)
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0xd93f3c","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Active Policies</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | dedup array_id, snapshot_policy_name
+                        | search suspended="true"
+                        | stats count(snapshot_policy_name)
+                    </query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Suspended Policies</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+    </row>
+
+    <!--Dashboard third row - Snapshot Policy Summary-->
+    <row>
+        <panel>
+            <table>
+                <search base="powermax_recent_data">
+                    <query>
+                        | dedup array_id, snapshot_policy_name
+                        | fillnull value="N/A" last_time_used
+                        | fillnull value=0 storage_group_count, compliance_count_warning,
+                        compliance_count_critical
+                        | table array_id, snapshot_policy_name, policy_type,
+                        provider_name, secure, suspended, interval_minutes,
+                        offset_minutes, snapshot_count, last_time_used,
+                        snapshot_count, storage_group_count,
+                        compliance_count_warning, compliance_count_critical
+                        | sort array_id, name
+                        | rename array_id as "Array ID",
+                        snapshot_policy_name as "Policy Name",
+                        policy_type as "Policy Type",
+                        provider_name as "Cloud Provider",
+                        secure as "Secure",
+                        suspended as "Suspended",
+                        interval_minutes as "Interval (mins)",
+                        offset_minutes as "Offset (mins)",
+                        snapshot_count as "Max Snapshot Count",
+                        last_time_used as "Last Used",
+                        storage_group_count as "SG Count",
+                        compliance_count_warning as "Compliance Warning",
+                        compliance_count_critical as "Compliance Critical"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+</form>

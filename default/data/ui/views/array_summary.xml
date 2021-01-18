@@ -1,531 +1,637 @@
-<form>
-  <label>VMAX Summary</label>
-  <search id="vmax_recent_data">
-    <query>`vmax_array` array_id=$array_tok$
+<form theme="dark">
+    <label>PowerMax Summary</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_recent_data">
+        <query>
+            `powermax_array` array_id=$array_tok$
+            | rex field=source
+            "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            | search p_src=$u4p_tok$
             | head 1000
             | dedup array_id
             | fields
-            array_id,slo_compliance_slo_stable,slo_compliance_slo_marginal,
-            slo_compliance_slo_critical, srdfs_source,
-            array_alert_summary_info_acknowledged_count,
-            array_alert_summary_info_unacknowledged_count,
-            array_alert_summary_critical_acknowledged_count,
-            array_alert_summary_critical_unacknowledged_count,
-            array_alert_summary_fatal_acknowledged_count,
-            array_alert_summary_fatal_unacknowledged_count,
-            array_alert_summary_info_acknowledged_count,
-            array_alert_summary_info_unacknowledged_count,
-            array_alert_summary_minor_acknowledged_count,
-            array_alert_summary_minor_unacknowledged_count,
-            array_alert_summary_normal_acknowledged_count,
-            array_alert_summary_normal_unacknowledged_count,
-            array_alert_summary_warning_acknowledged_count,
-            array_alert_summary_warning_unacknowledged_count,
-            total_usable_cap_gb,total_allocated_cap_gb,total_subscribed_cap_gb,
-            snap_vx_capable, snapshot_saved_percent,
-            snapshot_compression_ratio,snapshot_efficency_ratio,
-            snapshot_shared_ratio, vp_saved_percent,
-            vp_compression_ratio,vp_efficency_ratio,
-            vp_overall_efficiency_ratio_to_one, vp_shared_ratio,source,
-            model, ucode, device_count, data_encryption, compression_enabled,
-            srdfs_target,overall_compression_ratio, overall_efficiency_ratio,
-            overall_health_score, system_meta_data_used_percent
+            slo_compliance_no_slo, slo_compliance_slo_stable,
+            slo_compliance_slo_marginal, slo_compliance_slo_critical,
+            system_capacity_usable_total_tb, system_capacity_usable_used_tb,
+            system_capacity_subscribed_total_tb,
+            system_capacity_subscribed_allocated_tb,
+            array_id, p_src, model, ucode, device_count, data_encryption,
+            compression, snap_vx_capable, snapshot_policy_capable,
+            overall_compression_ratio,
+            system_efficiency_data_reduction_enabled_percent,
+            system_efficiency_deduplication_and_compression_savings_tb,
+            system_efficiency_drr_on_reducible_only_to_one,
+            system_efficiency_overall_efficiency_ratio_to_one,
+            system_efficiency_pattern_detection_savings_tb,
+            system_efficiency_reducible_data_tb,
+            system_efficiency_snapshot_savings_ratio_to_one,
+            system_efficiency_unreducible_data_tb,
+            system_efficiency_virtual_provisioning_savings_ratio_to_one,
+            meta_data_usage_frontend_meta_data_used_percent,
+            meta_data_usage_backend_meta_data_used_percent,
+            meta_data_usage_replication_cache_used_percent,
+            meta_data_usage_system_meta_data_used_percent,
+            health_capacity, health_configuration, health_overall,
+            health_service_level_compliance, health_system_utilization,
+            health_storage_group_response_time
         </query>
-    <earliest>-15m</earliest>
-    <latest>now</latest>
-  </search>
-  <search id="vmax_24hr_data">
-    <query>`vmax_array` array_id=$array_tok$
-            | fields array_id, percent_cache_wp, percent_meta_system_used,
-            be_utilization, fe_utilization,
-            rdf_utilization, disk_utilization, total_usable_cap_gb,
-            total_allocated_cap_gb, total_subscribed_cap_gb
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+    <search id="powermax_alert_data">
+        <query>
+            `powermax_alert` array_id=$array_tok$
+            | rex field=source
+            "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            | search p_src=$u4p_tok$
+            | dedup u4v_source, alert_id
+            | fields array_id, severity
         </query>
-    <earliest>$time_tok.earliest$</earliest>
-    <latest>$time_tok.latest$</latest>
-  </search>
-  <fieldset submitButton="false" autoRun="true">
-    <input type="dropdown" token="array_tok" searchWhenChanged="true">
-      <label>Array ID</label>
-      <choice value="*">ALL</choice>
-      <search>
-        <query>`vmax_array` | dedup array_id | table array_id | sort
-                    desc
-                </query>
+        <earliest>-15m</earliest>
+        <latest>now</latest>
+    </search>
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_array` array_id=$array_tok$
+            | rex field=source
+            "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+            | search p_src=$u4p_tok$
+            | fields array_id, system_capacity_usable_used_tb,
+            system_capacity_subscribed_total_tb, percent_cache_wp,
+            percent_meta_system_used, fe_utilization, be_utilization,
+            rdf_utilization, disk_utilization
+        </query>
         <earliest>$time_tok.earliest$</earliest>
         <latest>$time_tok.latest$</latest>
-      </search>
-      <fieldForLabel>array_id</fieldForLabel>
-      <fieldForValue>array_id</fieldForValue>
-      <default>*</default>
-    </input>
-    <input type="time" token="time_tok" searchWhenChanged="true">
-      <label>Time Frame</label>
-      <default>
-        <earliest>-24h</earliest>
-        <latest>now</latest>
-      </default>
-    </input>
-  </fieldset>
-  <row>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>stats sum(slo_compliance_slo_stable)</query>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">all</option>
-        <option name="rangeColors">["0x65a637","0x65a637"]</option>
-        <option name="rangeValues">[0]</option>
-        <option name="trellis.enabled">0</option>
-        <option name="trellis.size">large</option>
-        <option name="trellis.splitBy">_aggregation</option>
-        <option name="underLabel">Stable Storage Groups</option>
-        <option name="useColors">1</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/sg_summary</link>
-        </drilldown>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>stats sum(slo_compliance_slo_marginal)</query>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">all</option>
-        <option name="rangeColors">["0x65a637","0xf58f39"]</option>
-        <option name="rangeValues">[0]</option>
-        <option name="underLabel">Marginal Storage Groups</option>
-        <option name="useColors">1</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/sg_summary</link>
-        </drilldown>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>stats sum(slo_compliance_slo_critical)</query>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">all</option>
-        <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
-        <option name="rangeValues">[0]</option>
-        <option name="underLabel">Critical Storage Groups</option>
-        <option name="useColors">1</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/sg_summary</link>
-        </drilldown>
-      </single>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>eval
-                        info_sum = (array_alert_summary_info_acknowledged_count
-                        + array_alert_summary_info_unacknowledged_count)
-                        | fillnull value=0 info_sum
-                        | stats sum(info_sum)
+    </search>
+
+    <!--Array selection field-->
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="u4p_tok" searchWhenChanged="true">
+            <label>Unisphere Source</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_array` array_id=$array_tok$
+                    | rex field=source
+                    "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+                    | dedup p_src
+                    | table p_src
+                    | sort p_src
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>p_src</fieldForLabel>
+            <fieldForValue>p_src</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_array`
+                    | rex field=source
+                    "vmax://(?&lt;p_src&gt;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+                    | search p_src=$u4p_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort desc
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+
+    <!--Dashboard first row - PowerMax Summary-->
+    <row>
+        <panel>
+            <table>
+                <search base="powermax_recent_data">
+                    <query>
+                        | table array_id, p_src, model, ucode, device_count,
+                        data_encryption, overall_compression_ratio,
+                        snap_vx_capable, snapshot_policy_capable
+                        | sort desc array_id
+                        | rename array_id as "Array ID",
+                        p_src as "Unisphere Source",
+                        model as "Model",
+                        ucode as "uCode Verison",
+                        device_count as "Device Count",
+                        data_encryption as "Data Encryption",
+                        overall_compression_ratio as "Compression Ratio (:1)",
+                        snap_vx_capable as "SnapVX Capable",
+                        snapshot_policy_capable as "SnapVX Policy Capable"
                     </query>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">all</option>
-        <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
-        <option name="rangeValues">[0]</option>
-        <option name="underLabel">Info Alert Count</option>
-        <option name="useColors">1</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts</link>
-        </drilldown>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>eval
-                        alert_sum =
-                        (array_alert_summary_minor_acknowledged_count +
-                        array_alert_summary_minor_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - Storage Group SLO compliance-->
+    <row>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>stats sum(slo_compliance_no_slo)</query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="rangeColors">["0x65a637","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">No Service Level Storage Groups
+                </option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>stats sum(slo_compliance_slo_stable)</query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0x65a637"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="trellis.enabled">0</option>
+                <option name="trellis.size">large</option>
+                <option name="trellis.splitBy">_aggregation</option>
+                <option name="underLabel">Stable Storage Groups</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>stats sum(slo_compliance_slo_marginal)</query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf58f39"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Marginal Storage Groups</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>stats sum(slo_compliance_slo_critical)</query>
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Critical Storage Groups</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+    </row>
+
+    <!--Dashboard third row - Alert counts-->
+    <row>
+        <panel>
+            <single>
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Information
+                        | stats count
                     </query>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">all</option>
-        <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
-        <option name="rangeValues">[0]</option>
-        <option name="underLabel">Minor Alert Count</option>
-        <option name="useColors">1</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts</link>
-        </drilldown>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>eval
-                        alert_sum =
-                        (array_alert_summary_normal_acknowledged_count +
-                        array_alert_summary_normal_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Info Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Minor
+                        | stats count
                     </query>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">all</option>
-        <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
-        <option name="rangeValues">[0]</option>
-        <option name="underLabel">Normal Alert Count</option>
-        <option name="useColors">1</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts</link>
-        </drilldown>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>eval
-                        alert_sum =
-                        (array_alert_summary_warning_acknowledged_count +
-                        array_alert_summary_warning_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Minor Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Normal
+                        | stats count
                     </query>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">all</option>
-        <option name="rangeColors">["0x65a637","0xf58f39"]</option>
-        <option name="rangeValues">[0]</option>
-        <option name="underLabel">Warning Alert Count</option>
-        <option name="useColors">1</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts</link>
-        </drilldown>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>eval
-                        alert_sum =
-                        (array_alert_summary_critical_acknowledged_count +
-                        array_alert_summary_critical_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf7bc38"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Normal Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Warning
+                        | stats count
                     </query>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">all</option>
-        <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
-        <option name="rangeValues">[0]</option>
-        <option name="underLabel">Critical Alert Count</option>
-        <option name="useColors">1</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts</link>
-        </drilldown>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>eval
-                        alert_sum =
-                        (array_alert_summary_fatal_acknowledged_count +
-                        array_alert_summary_fatal_unacknowledged_count)
-                        | fillnull value=0 alert_sum
-                        | stats sum(alert_sum)
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xf58f39"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Warning Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=Critical
+                        | stats count
                     </query>
-        </search>
-        <option name="colorMode">block</option>
-        <option name="drilldown">all</option>
-        <option name="rangeColors">["0x65a637","0x555"]</option>
-        <option name="rangeValues">[0]</option>
-        <option name="underLabel">Fatal Alert Count</option>
-        <option name="useColors">1</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/vmax_alerts</link>
-        </drilldown>
-      </single>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>| stats sum(total_usable_cap_gb) AS total_usable
-                        | eval new_total = total_usable/1024
-                        | table new_total
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0xd93f3c"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Critical Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_alert_data">
+                    <query>
+                        | search severity=FATAL
+                        | stats count
                     </query>
-        </search>
-        <option name="drilldown">all</option>
-        <option name="numberPrecision">0.00</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="underLabel">Total Usable Capacity (TB)</option>
-        <drilldown>
-          <link target="_self">search?q=`vmax_array` array_id=* |
-                        head 1000 | dedup array_id | table array_id,
-                        total_usable_cap_gb | sort array_id | rename array_id
-                        as "Array ID", total_usable_cap_gb as "Total Usable
-                        Capacity (GB)"&amp;earliest=-15m&amp;latest=now</link>
-        </drilldown>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>| stats sum(total_allocated_cap_gb) AS
-                        total_allocated
-                        | eval new_total = total_allocated/1024
-                        | table new_total
+                </search>
+                <option name="colorMode">none</option>
+                <option name="drilldown">none</option>
+                <option name="rangeColors">["0x65a637","0x555"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="underLabel">Fatal Alert Count</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+    </row>
+
+    <!--Dashboard fourth row - PowerMax Capacity Info-->
+    <row>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | stats sum(system_capacity_usable_total_tb) AS
+                        total_usable
+                        | table total_usable
                     </query>
-        </search>
-        <option name="drilldown">all</option>
-        <option name="numberPrecision">0.00</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="underLabel">Total Allocated Capactiy (TB)</option>
-        <drilldown>
-          <link target="_self">search?q=`vmax_array` array_id=* |
-                        head 1000 | dedup array_id | table array_id,
-                        total_allocated_cap_gb | sort array_id | rename
-                        array_id as "Array ID", total_allocated_cap_gb as
-                        "Total Allocated Capacity (GB)"&amp;earliest=-15m&amp;latest=now</link>
-        </drilldown>
-      </single>
-    </panel>
-    <panel>
-      <single>
-        <search base="vmax_recent_data">
-          <query>| stats sum(total_subscribed_cap_gb) AS
-                        total_subscribed
-                        | eval new_total = total_subscribed/1024
-                        | table new_total
+                </search>
+                <option name="drilldown">none</option>
+                <option name="numberPrecision">0.00</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">Total Usable Capacity (TB)</option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | stats sum(system_capacity_usable_used_tb) AS
+                        total_used
+                        | table total_used
                     </query>
-        </search>
-        <option name="drilldown">all</option>
-        <option name="numberPrecision">0.00</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="underLabel">Total Subscribed Capacity (TB)</option>
-        <drilldown>
-          <link target="_self">search?q=`vmax_array` array_id=* |
-                        head 1000 | dedup array_id | table array_id,
-                        total_subscribed_cap_gb | sort array_id | rename
-                        array_id as "Array ID", total_subscribed_cap_gb as
-                        "Total Subscribed Capacity (GB)"&amp;earliest=-15m&amp;latest=now</link>
-        </drilldown>
-      </single>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>Total Allocated Capacity (GB)</title>
-      <chart>
-        <search base="vmax_24hr_data">
-          <query>timechart avg(total_allocated_cap_gb) by array_id
+                </search>
+                <option name="drilldown">none</option>
+                <option name="numberPrecision">0.00</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">Total Used Capacity (TB)
+                </option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | stats sum(system_capacity_subscribed_total_tb) AS
+                        total_sub
+                        | table total_sub
                     </query>
-        </search>
-        <option name="charting.axisTitleX.visibility">collapsed</option>
-        <option name="charting.axisTitleY.visibility">collapsed</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">zero</option>
-        <option name="charting.drilldown">none</option>
-        <option name="charting.legend.labelStyle.overflowMode">ellipsisStart</option>
-        <option name="charting.legend.placement">right</option>
-      </chart>
-    </panel>
-    <panel>
-      <title>Total Subscribed Capacity (GB)</title>
-      <chart>
-        <search base="vmax_24hr_data">
-          <query>timechart avg(total_subscribed_cap_gb) by array_id
+                </search>
+                <option name="drilldown">none</option>
+                <option name="numberPrecision">0.00</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">Total Subscribed Capacity (TB)
+                </option>
+            </single>
+        </panel>
+        <panel>
+            <single>
+                <search base="powermax_recent_data">
+                    <query>
+                        | stats sum(system_capacity_subscribed_allocated_tb) AS
+                        total_sub_alloc
+                        | table total_sub_alloc
                     </query>
-        </search>
-        <option name="charting.axisTitleX.visibility">collapsed</option>
-        <option name="charting.axisTitleY.visibility">collapsed</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">zero</option>
-        <option name="charting.drilldown">none</option>
-        <option name="charting.legend.labelStyle.overflowMode">ellipsisStart</option>
-      </chart>
-    </panel>
-    <panel>
-      <title>% Cache Write Pending</title>
-      <chart>
-        <search base="vmax_24hr_data">
-          <query>timechart avg(percent_cache_wp) by array_id</query>
-        </search>
-        <option name="charting.axisTitleX.visibility">collapsed</option>
-        <option name="charting.axisTitleY.visibility">collapsed</option>
-        <option name="charting.axisY.maximumNumber">100</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">zero</option>
-        <option name="charting.drilldown">none</option>
-        <option name="charting.legend.labelStyle.overflowMode">ellipsisStart</option>
-      </chart>
-    </panel>
-    <panel>
-      <title>% System Metadata Usage</title>
-      <chart>
-        <search base="vmax_24hr_data">
-          <query>timechart avg(percent_meta_system_used) by
+                </search>
+                <option name="drilldown">none</option>
+                <option name="numberPrecision">0.00</option>
+                <option name="refresh.display">progressbar</option>
+                <option name="underLabel">Total Subscribed Allocated (TB)
+                </option>
+            </single>
+        </panel>
+    </row>
+
+    <!--Dashboard fifth row - Array Health-->
+    <row>
+        <panel>
+            <title>System Efficiency</title>
+            <table>
+                <search base="powermax_recent_data">
+                    <query>
+                        | table array_id,
+                        system_efficiency_overall_efficiency_ratio_to_one,
+                        system_efficiency_reducible_data_tb,
+                        system_efficiency_unreducible_data_tb,
+                        system_efficiency_pattern_detection_savings_tb,
+                        system_efficiency_deduplication_and_compression_savings_tb,
+                        system_efficiency_drr_on_reducible_only_to_one,
+                        system_efficiency_snapshot_savings_ratio_to_one,
+                        system_efficiency_virtual_provisioning_savings_ratio_to_one
+                        | fillnull value="-" system_efficiency_overall_efficiency_ratio_to_one,
+                        system_efficiency_reducible_data_tb,
+                        system_efficiency_unreducible_data_tb,
+                        system_efficiency_pattern_detection_savings_tb,
+                        system_efficiency_deduplication_and_compression_savings_tb,
+                        system_efficiency_drr_on_reducible_only_to_one,
+                        system_efficiency_snapshot_savings_ratio_to_one,
+                        system_efficiency_virtual_provisioning_savings_ratio_to_one
+                        | sort desc array_id
+                        | rename array_id as "Array ID",
+                        system_efficiency_overall_efficiency_ratio_to_one as
+                        "Overall Efficiency Ratio (:1)",
+                        system_efficiency_reducible_data_tb as
+                        "Reducible Data (TB)",
+                        system_efficiency_unreducible_data_tb as
+                        "Unreducible Data (TB)",
+                        system_efficiency_pattern_detection_savings_tb as
+                        "Pattern Detection Savings (TB)",
+                        system_efficiency_deduplication_and_compression_savings_tb as
+                        "Deduplication &amp; Compressions Savings (TB)",
+                        system_efficiency_drr_on_reducible_only_to_one as
+                        "DRR on Reducible Only (:1)",
+                        system_efficiency_snapshot_savings_ratio_to_one as
+                        "Snapshot Savings Ratio (:1)",
+                        system_efficiency_virtual_provisioning_savings_ratio_to_one as
+                        "VP Savings (:1)"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+
+    </row>
+
+    <!--Dashboard sixth row - Health Score & Metadata Usage-->
+    <row>
+        <panel>
+            <title>Health Score (/100)</title>
+            <table>
+                <search base="powermax_recent_data">
+                    <query>
+                        | table array_id, health_capacity,
+                        health_configuration, health_service_level_compliance,
+                        health_storage_group_response_time,
+                        health_system_utilization, health_overall,
+                        | sort desc array_id
+                        | rename array_id as "Array ID",
+                        health_capacity as "Capacity",
+                        health_configuration as "Configuration",
+                        health_overall as "Overall",
+                        health_service_level_compliance as "Service Level Compliance",
+                        health_storage_group_response_time as "SG Response Time",
+                        health_system_utilization as "System Utilization"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+        <panel>
+            <title>Metadata Usage %</title>
+            <table>
+                <search base="powermax_recent_data">
+                    <query>
+                        | table array_id,
+                        meta_data_usage_frontend_meta_data_used_percent,
+                        meta_data_usage_backend_meta_data_used_percent,
+                        meta_data_usage_replication_cache_used_percent,
+                        meta_data_usage_system_meta_data_used_percent
+                        | sort desc array_id
+                        | rename array_id as "Array ID",
+                        meta_data_usage_frontend_meta_data_used_percent as
+                        "Frontend",
+                        meta_data_usage_backend_meta_data_used_percent as
+                        "Backend",
+                        meta_data_usage_replication_cache_used_percent as
+                        "Replication Cache",
+                        meta_data_usage_system_meta_data_used_percent as
+                        "System"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard seventh row - Chart Row # 1-->
+    <row>
+        <panel>
+            <title>Total Allocated Capacity (TB)</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(system_capacity_usable_used_tb) by
                         array_id
                     </query>
-        </search>
-        <option name="charting.axisTitleX.visibility">collapsed</option>
-        <option name="charting.axisTitleY.visibility">collapsed</option>
-        <option name="charting.axisY.maximumNumber">100</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">zero</option>
-        <option name="charting.drilldown">none</option>
-        <option name="charting.legend.labelStyle.overflowMode">ellipsisStart</option>
-      </chart>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>BE Utilization %</title>
-      <chart>
-        <search base="vmax_24hr_data">
-          <query>timechart avg(be_utilization) by array_id</query>
-        </search>
-        <option name="charting.axisTitleX.visibility">collapsed</option>
-        <option name="charting.axisTitleY.visibility">collapsed</option>
-        <option name="charting.axisY.maximumNumber">100</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">zero</option>
-        <option name="charting.drilldown">all</option>
-        <option name="charting.legend.labelStyle.overflowMode">ellipsisStart</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/be_dir_summary</link>
-        </drilldown>
-      </chart>
-    </panel>
-    <panel>
-      <title>FE Utilization %</title>
-      <chart>
-        <search base="vmax_24hr_data">
-          <query>timechart avg(fe_utilization) by array_id</query>
-        </search>
-        <option name="charting.axisTitleX.visibility">collapsed</option>
-        <option name="charting.axisTitleY.visibility">collapsed</option>
-        <option name="charting.axisY.maximumNumber">100</option>
-        <option name="charting.axisY.scale">linear</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">zero</option>
-        <option name="charting.legend.labelStyle.overflowMode">ellipsisStart</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/fe_dir_summary</link>
-        </drilldown>
-      </chart>
-    </panel>
-    <panel>
-      <title>RDF Utilization %</title>
-      <chart>
-        <search base="vmax_24hr_data">
-          <query>timechart avg(rdf_utilization) by array_id</query>
-        </search>
-        <option name="charting.axisTitleX.visibility">collapsed</option>
-        <option name="charting.axisTitleY.visibility">collapsed</option>
-        <option name="charting.axisY.abbreviation">auto</option>
-        <option name="charting.axisY.maximumNumber">100</option>
-        <option name="charting.axisY.scale">linear</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">zero</option>
-        <option name="charting.drilldown">all</option>
-        <option name="charting.legend.labelStyle.overflowMode">ellipsisStart</option>
-        <drilldown>
-          <link target="_self">/app/Dell-EMC-app-VMAX/rdf_dir_summary</link>
-        </drilldown>
-      </chart>
-    </panel>
-    <panel>
-      <title>Disk Utilization %</title>
-      <chart>
-        <search base="vmax_24hr_data">
-          <query>timechart avg(disk_utilization) by array_id</query>
-        </search>
-        <option name="charting.axisTitleX.visibility">collapsed</option>
-        <option name="charting.axisTitleY.visibility">collapsed</option>
-        <option name="charting.axisY.maximumNumber">100</option>
-        <option name="charting.axisY.scale">linear</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">zero</option>
-        <option name="charting.drilldown">none</option>
-        <option name="charting.legend.labelStyle.overflowMode">ellipsisStart</option>
-      </chart>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>VMAX Summary</title>
-      <table>
-        <search base="vmax_recent_data">
-          <query>
-                        | table array_id, source, model, ucode, device_count,
-                        data_encryption, compression_enabled,
-                        srdfs_source, srdfs_target, overall_compression_ratio,
-                        overall_efficiency_ratio,
-                        overall_health_score, system_meta_data_used_percent
-                        | sort array_id
-                        | rename array_id as "Array ID", source as "VMAX
-                        Unisphere Source", model as "VMAX Version",
-                        ucode as "uCode Verison", device_count as "Device
-                        Count", data_encryption as "Data Encrypthon",
-                        compression_enabled as "Compression Enabled",
-                        overall_compression_ratio as "Overall Compression
-                        Ratio", overall_efficiency_ratio as "Overall Efficiency
-                        Ratio", overall_health_score as "Overall
-                        Health Score", system_meta_data_used_percent as "System
-                        Metadata Used (%)", srdfs_source as
-                        "SRDFS Source", srdfs_target as "SRDFS Target"
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+                <option name="charting.legend.placement">right</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Total Subscribed Capacity (TB)</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(system_capacity_subscribed_total_tb)
+                        by array_id
                     </query>
-        </search>
-        <option name="drilldown">none</option>
-      </table>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>Snapshot Details</title>
-      <table>
-        <search base="vmax_recent_data">
-          <query>| table array_id, snap_vx_capable,
-                        snapshot_saved_percent, snapshot_compression_ratio,
-                        snapshot_efficency_ratio, snapshot_shared_ratio
-                        | sort array_id
-                        | rename array_id as "Array ID", snap_vx_capable as
-                        "Snap VX Capable", snapshot_saved_percent as
-                        "Saved %", snapshot_compression_ratio as "Compression
-                        Ratio",
-                        snapshot_efficency_ratio as "Efficency Ratio",
-                        snapshot_shared_ratio as "Shared Ratio"
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>% Cache Write Pending</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(percent_cache_wp) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>% System Metadata Usage</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(percent_meta_system_used) by
+                        array_id
                     </query>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-    <panel>
-      <title>Virtual Provisioning Details</title>
-      <table>
-        <search base="vmax_recent_data">
-          <query>| table
-                        array_id,vp_saved_percent,vp_compression_ratio,
-                        vp_efficency_ratio,vp_shared_ratio
-                        | sort array_id
-                        | rename array_id as "Array ID",vp_saved_percent as
-                        "Saved %", vp_compression_ratio as "Compression Ratio",
-                        vp_efficency_ratio as "Efficency Ratio",vp_shared_ratio
-                        as "Shared Ratio"
-                    </query>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-  </row>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+    </row>
+
+    <!--Dashboard eighth row - Host Performance-->
+    <row>
+        <panel>
+            <title>Frontend Utilization %</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(fe_utilization) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Backend Utilization %</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(be_utilization) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>RDF Utilization %</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(rdf_utilization) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Disk Utilization %</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>timechart avg(disk_utilization) by array_id</query>
+                </search>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.legend.labelStyle.overflowMode">
+                    ellipsisStart
+                </option>
+            </chart>
+        </panel>
+    </row>
 </form>

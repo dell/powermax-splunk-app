@@ -1,0 +1,302 @@
+<form theme="dark">
+    <label>IP Interface Overview &amp; Performance</label>
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_24hr_data">
+        <query>
+            `powermax_ip_interface`
+            array_id=$array_tok$
+            director_id=$dir_tok$
+            network_id=$net_tok$
+            vlan_id=$vlan_tok$
+            mtu=$mtu_tok$
+            ip_address=$ip_tok$
+            | fields array_id, director_id, port_id, ip_address,
+            io_rate, mbs, packet_count, reads, writes
+        </query>
+        <earliest>$time_tok.earliest$</earliest>
+        <latest>$time_tok.latest$</latest>
+    </search>
+
+    <!--Port selection field-->
+    <fieldset submitButton="false" autoRun="true">
+        <input type="dropdown" token="array_tok" searchWhenChanged="true">
+            <label>Array ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_ip_interface`
+                    director_id=$dir_tok$
+                    network_id=$net_tok$
+                    vlan_id=$vlan_tok$
+                    mtu=$mtu_tok$
+                    ip_address=$ip_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>array_id</fieldForLabel>
+            <fieldForValue>array_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="dir_tok" searchWhenChanged="true">
+            <label>Director ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_ip_interface`
+                    array_id=$array_tok$
+                    network_id=$net_tok$
+                    vlan_id=$vlan_tok$
+                    mtu=$mtu_tok$
+                    ip_address=$ip_tok$
+                    | dedup director_id
+                    | table director_id
+                    | sort director_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>director_id</fieldForLabel>
+            <fieldForValue>director_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="net_tok" searchWhenChanged="true">
+            <label>Network ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_ip_interface`
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    vlan_id=$vlan_tok$
+                    mtu=$mtu_tok$
+                    ip_address=$ip_tok$
+                    | dedup network_id
+                    | table network_id
+                    | sort network_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>network_id</fieldForLabel>
+            <fieldForValue>network_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="vlan_tok" searchWhenChanged="true">
+            <label>VLAN ID</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_ip_interface`
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    network_id=$net_tok$
+                    mtu=$mtu_tok$
+                    ip_address=$ip_tok$
+                    | dedup vlan_id
+                    | table vlan_id
+                    | sort vlan_id
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>vlan_id</fieldForLabel>
+            <fieldForValue>vlan_id</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="mtu_tok" searchWhenChanged="true">
+            <label>MTU</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_ip_interface`
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    network_id=$net_tok$
+                    vlan_id=$vlan_tok$
+                    ip_address=$ip_tok$
+                    | dedup mtu
+                    | table mtu
+                    | sort mtu
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>mtu</fieldForLabel>
+            <fieldForValue>mtu</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="dropdown" token="ip_tok" searchWhenChanged="true">
+            <label>IP Address</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>
+                    `powermax_ip_interface`
+                    array_id=$array_tok$
+                    director_id=$dir_tok$
+                    network_id=$net_tok$
+                    vlan_id=$vlan_tok$
+                    mtu=$mtu_tok$
+                    | dedup ip_address
+                    | table ip_address
+                    | sort ip_address
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>ip_address</fieldForLabel>
+            <fieldForValue>ip_address</fieldForValue>
+            <default>*</default>
+        </input>
+        <input type="time" token="time_tok" searchWhenChanged="true">
+            <label>Time Frame</label>
+            <default>
+                <earliest>-24h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+    </fieldset>
+
+    <!--Dashboard first row - iSCSI Tgt Summary-->
+    <row>
+        <panel>
+            <table>
+                <search>
+                    <query>
+                        `powermax_ip_interface`
+                        array_id=$array_tok$
+                        director_id=$dir_tok$
+                        network_id=$net_tok$
+                        vlan_id=$vlan_tok$
+                        mtu=$mtu_tok$
+                        ip_address=$ip_tok$
+                        | dedup array_id, ip_address
+                        | fillnull value=None iscsi_target_port, iscsi_target_iqn
+                        | table array_id, director_id, iscsi_target_port, port_id,
+                        ip_address, iscsi_target_iqn, network_id, vlan_id, mtu
+                        | sort array_id, director_id, port_id, ip_address
+                        | rename array_id as "Array ID",
+                        director_id as "Director ID",
+                        port_id as "Virtual Port ID",
+                        iscsi_target_port as "Physical Port ID",
+                        ip_address as "IP Address",
+                        network_id as "Network ID",
+                        vlan_id as "VLAN ID",
+                        mtu as "MTU",
+                        iscsi_target_iqn as "iSCSI Target IQN"
+                    </query>
+                </search>
+                <option name="drilldown">none</option>
+                <option name="refresh.display">progressbar</option>
+            </table>
+        </panel>
+    </row>
+
+    <!--Dashboard second row - IO Rate/Packet Count/MBs-->
+    <row>
+        <panel>
+            <title>IO Rate/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(io_rate) by ip_address
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Packet Count/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(packet_count) by ip_address
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>MBs/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(mbs) by ip_address
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+    <!--Dashboard third row - Reads & Writes-->
+    <row>
+        <panel>
+            <title>Reads/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(reads) by ip_address
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+        <panel>
+            <title>Writes/sec</title>
+            <chart>
+                <search base="powermax_24hr_data">
+                    <query>
+                        | timechart avg(writes) by ip_address
+                        usenull=f useother=f
+                    </query>
+                </search>
+                <option name="charting.axisY.scale">log</option>
+                <option name="charting.axisTitleX.visibility">collapsed
+                </option>
+                <option name="charting.axisTitleY.visibility">collapsed
+                </option>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+</form>

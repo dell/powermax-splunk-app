@@ -1,28 +1,51 @@
-<form>
+<form theme="dark">
     <label>Storage Group Performance</label>
-    <search id="vmax_24hr_data">
-        <query>`vmax_sg` array_id=$array_tok$ srp=$srp_tok$
-            storage_group_id=$sg_tok$ | fields array_id, srp,
-            storage_group_id, percent_hit, percent_misses, percent_read,
-            percent_write, host_ios, host_mb_reads,
+
+    <!--On load searches for panel re-use-->
+    <search id="powermax_sg_24hr_data">
+        <query>
+            `powermax_sg`
+            array_id=$array_tok$
+            srp=$srp_tok$
+            storage_group_id=$sg_tok$
+            service_level=$sl_tok$
+            workload=$wl_tok$
+            device_emulation=$emu_tok$
+            type=$type_tok$
+            compression=$compression_tok$
+            slo_compliance=$compliance_tok$
+            | fields array_id, srp, storage_group_id,
+            read_response_time, write_response_time, response_time,
+            avg_write_paced_delay, host_io_limit_percent_time_exceeded,
+            write_paced_delay, wp_count, percent_hit, percent_misses,
+            percent_read, percent_write, host_ios, host_mb_reads,
             host_mb_written, host_mbs, host_hits, host_misses, host_reads,
-            host_writes,
-            host_io_limit_percent_time_exceeded, be_reqs, be_read_reqs,
-            be_write_reqs, rdf_response_time,
-            rdfs_write_response_time, avg_write_paced_delay, write_paced_delay,
-            wp_count, read_response_time,
-            write_response_time, response_time
+            host_writes, be_reqs, be_read_reqs, be_write_reqs,
+            rdf_response_time, rdfs_write_response_time
         </query>
         <earliest>$time_tok.earliest$</earliest>
         <latest>$time_tok.latest$</latest>
     </search>
+
+    <!--Storage Group selection field-->
     <fieldset submitButton="false" autoRun="true">
         <input type="dropdown" token="array_tok" searchWhenChanged="true">
             <label>Array ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_array` | dedup array_id | table array_id | sort
-                    array_id
+                <query>
+                    `powermax_sg`
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup array_id
+                    | table array_id
+                    | sort array_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -31,12 +54,23 @@
             <fieldForValue>array_id</fieldForValue>
             <default>*</default>
         </input>
+
         <input type="dropdown" token="srp_tok" searchWhenChanged="true">
             <label>SRP ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_sg` array_id=$array_tok$ | dedup srp | table srp |
-                    sort srp
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup srp
+                    | table srp
+                    | sort srp
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -45,13 +79,23 @@
             <fieldForValue>srp</fieldForValue>
             <default>*</default>
         </input>
+
         <input type="dropdown" token="sg_tok" searchWhenChanged="true">
             <label>Storage Group ID</label>
             <choice value="*">ALL</choice>
             <search>
-                <query>`vmax_sg` array_id=$array_tok$ srp=$srp_tok$ | dedup
-                    storage_group_id | table storage_group_id |
-                    sort storage_group_id
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup storage_group_id
+                    | table storage_group_id
+                    | sort storage_group_id
                 </query>
                 <earliest>$time_tok.earliest$</earliest>
                 <latest>$time_tok.latest$</latest>
@@ -60,6 +104,157 @@
             <fieldForValue>storage_group_id</fieldForValue>
             <default>*</default>
         </input>
+
+        <input type="dropdown" token="sl_tok" searchWhenChanged="true">
+            <label>Service Level</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup service_level
+                    | table service_level
+                    | sort service_level
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>service_level</fieldForLabel>
+            <fieldForValue>service_level</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="wl_tok" searchWhenChanged="true">
+            <label>Workload Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup workload
+                    | table workload
+                    | sort workload
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>workload</fieldForLabel>
+            <fieldForValue>workload</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="emu_tok" searchWhenChanged="true">
+            <label>Emulation</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup device_emulation
+                    | table device_emulation
+                    | sort device_emulation
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>device_emulation</fieldForLabel>
+            <fieldForValue>device_emulation</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="type_tok" searchWhenChanged="true">
+            <label>Type</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    compression=$compression_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup type
+                    | table type
+                    | sort type
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>type</fieldForLabel>
+            <fieldForValue>type</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="compression_tok" searchWhenChanged="true">
+            <label>Compression</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    slo_compliance=$compliance_tok$
+                    | dedup compression
+                    | table compression
+                    | sort compression
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>compression</fieldForLabel>
+            <fieldForValue>compression</fieldForValue>
+            <default>*</default>
+        </input>
+
+        <input type="dropdown" token="compliance_tok" searchWhenChanged="true">
+            <label>Compliance</label>
+            <choice value="*">ALL</choice>
+            <search>
+                <query>`powermax_sg`
+                    array_id=$array_tok$
+                    srp=$srp_tok$
+                    storage_group_id=$sg_tok$
+                    service_level=$sl_tok$
+                    workload=$wl_tok$
+                    device_emulation=$emu_tok$
+                    type=$type_tok$
+                    compression=$compression_tok$
+                    | dedup slo_compliance
+                    | table slo_compliance
+                    | sort slo_compliance
+                </query>
+                <earliest>$time_tok.earliest$</earliest>
+                <latest>$time_tok.latest$</latest>
+            </search>
+            <fieldForLabel>slo_compliance</fieldForLabel>
+            <fieldForValue>slo_compliance</fieldForValue>
+            <default>*</default>
+        </input>
+
         <input type="time" token="time_tok" searchWhenChanged="true">
             <label>Time Frame</label>
             <default>
@@ -68,15 +263,19 @@
             </default>
         </input>
     </fieldset>
+
+    <!--Dashboard first row - Response Times-->
     <row>
         <panel>
             <title>Read Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(read_response_time) by
-                        storage_group_id usenull=f useother=f
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(read_response_time) by storage_group_id
+                        usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -84,16 +283,19 @@
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
         <panel>
             <title>Write Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(write_response_time) by
-                        storage_group_id usenull=f useother=f
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(write_response_time) by storage_group_id
+                        usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -101,16 +303,19 @@
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
         <panel>
             <title>Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(response_time) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(response_time) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -118,18 +323,23 @@
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard second row - SG Write Delays/Pending, IO limit Exceeded-->
     <row>
         <panel>
             <title>Avg. Write Paced Delay (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(avg_write_paced_delay) by
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(avg_write_paced_delay) by
                         storage_group_id usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -137,16 +347,19 @@
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
         <panel>
             <title>Host IO Limit % Time Exceeded</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_io_limit_percent_time_exceeded)
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(host_io_limit_percent_time_exceeded)
                         by storage_group_id usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -154,21 +367,20 @@
                 <option name="charting.axisY.maximumNumber">100</option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
         <panel>
             <title>Write Paced Delay (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(write_paced_delay) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(write_paced_delay) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -176,16 +388,19 @@
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
         <panel>
             <title>Write Pending Count</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(wp_count) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(wp_count) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -193,18 +408,23 @@
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - % Hit/Miss/Read/Write-->
     <row>
         <panel>
             <title>% Hit</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_hit) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(percent_hit) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -213,32 +433,38 @@
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
         <panel>
             <title>% Miss</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_misses) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(percent_misses) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisY.maximumNumber">100</option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
         <panel>
             <title>% Reads</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_read) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(percent_read) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -247,16 +473,19 @@
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
         <panel>
             <title>% Writes</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(percent_write) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(percent_write) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
@@ -265,288 +494,266 @@
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
                 <option name="charting.drilldown">none</option>
+                <option name="charting.axisY.scale">log</option>
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - Host Stats IO/MB-->
     <row>
         <panel>
             <title>Host IOs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_ios) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(host_ios) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Host MBs Read/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_mb_reads) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(host_mb_reads) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Host MBs Written/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_mb_written) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(host_mb_written) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Host MBs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_mbs) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(host_mbs) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - Host Stats Hit/Miss/Read/Write-->
     <row>
         <panel>
             <title>Host Hits/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_hits) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(host_hits) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Host Misses/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_misses) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(host_misses) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Host Reads/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_reads) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(host_reads) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>Host Writes/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(host_writes) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(host_writes) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">/app/Dell-EMC-app-VMAX/host_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - BE Stats-->
     <row>
         <panel>
             <title>BE Reqs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(be_reqs) by storage_group_id usenull=f
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(be_reqs) by storage_group_id usenull=f
                         useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/be_dir_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>BE Read Reqs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(be_read_reqs) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(be_read_reqs) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/be_dir_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>BE Write Reqs/sec</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(be_write_reqs) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(be_write_reqs) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/be_dir_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
     </row>
+
+    <!--Dashboard third row - RDF Stats-->
     <row>
         <panel>
             <title>RDF Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(rdf_response_time) by storage_group_id
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(rdf_response_time) by storage_group_id
                         usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/rdf_dir_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
         <panel>
             <title>RDFS Write Response Time (ms)</title>
             <chart>
-                <search base="vmax_24hr_data">
-                    <query>timechart avg(rdfs_write_response_time) by
+                <search base="powermax_sg_24hr_data">
+                    <query>
+                        timechart avg(rdfs_write_response_time) by
                         storage_group_id usenull=f useother=f
                     </query>
                 </search>
+                <option name="charting.axisY.scale">log</option>
                 <option name="charting.axisTitleX.visibility">collapsed
                 </option>
                 <option name="charting.axisTitleY.visibility">collapsed
                 </option>
                 <option name="charting.chart">line</option>
                 <option name="charting.chart.nullValueMode">zero</option>
-                <option name="charting.drilldown">all</option>
-                <drilldown>
-                    <link target="_self">
-                        /app/Dell-EMC-app-VMAX/rdf_dir_summary
-                    </link>
-                </drilldown>
+                <option name="charting.drilldown">none</option>
             </chart>
         </panel>
     </row>
