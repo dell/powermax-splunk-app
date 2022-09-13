@@ -31,6 +31,12 @@ for both code can be viewed and downloaded from the links below:
 - `Dell EMC PowerMax App for Splunk Enterprise source`_
 
 
+What's New in PowerMax for Splunk 3.1
+-------------------------------------
+- Add support for jQuery 3.5
+- Mark UI Dashboards as sample dashboards to be used as templates
+  by users to build out their own custom dashboards
+
 What's New in PowerMax for Splunk 3.0
 -------------------------------------
 - New categories have been added:

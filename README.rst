@@ -1,4 +1,4 @@
-Welcome to PowerMax for Splunk 3.0!
+Welcome to PowerMax for Splunk 3.1!
 ===================================
 
 | |Maintenance| |OpenSource| |AskUs| |Test| |Build| |Docs|
@@ -7,7 +7,8 @@ Welcome to PowerMax for Splunk 3.0!
 Overview
 --------
 PowerMax for Splunk provides Splunk users with a backend Technology Add-on (TA)
-and frontend app to simplify interaction with Splunk Enterprise environments.
+and sample frontend app to simplify interaction with Splunk Enterprise
+environments.
 
 Full documentation can be found in PowerMax for Splunk's `ReadTheDocs`_.
 
@@ -19,9 +20,9 @@ Unisphere for PowerMax REST API.  You can directly analyse data use it as a
 contextual data feed to correlate with other operational or security data in
 Splunk Enterprise.
 
-The Splunk App for Dell EMC PowerMax allows a Splunk Enterprise administrator
-to data from PowerMax arrays through the TA and present them in pre-built
-dashboards, tables, and time charts for in-depth analysis.
+The sample Splunk App for Dell EMC PowerMax allows a Splunk Enterprise
+administrator to view data from PowerMax arrays through the TA and present them
+in pre-built dashboards, tables, and time charts for in-depth analysis.
 
 The TA and App can be downloaded from the links below:
 
@@ -31,11 +32,11 @@ The TA and App can be downloaded from the links below:
 Version Info
 ------------
 +---------------------------------+----------------------------------------+
-| **PowerMax for Splunk**         | 3.0                                    |
+| **PowerMax for Splunk**         | 3.1                                    |
 +---------------------------------+----------------------------------------+
-| **Technology Add-On**           | 3.0.0.0                                |
+| **Technology Add-On**           | 3.1.0.0                                |
 +---------------------------------+----------------------------------------+
-| **App**                         | 3.0.0.0                                |
+| **App**                         | 3.1.0.0                                |
 +---------------------------------+----------------------------------------+
 | **Minimum Unisphere Version**   | 9.2.0.0                                |
 +---------------------------------+----------------------------------------+

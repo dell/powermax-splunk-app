@@ -1,3 +1,9 @@
+PowerMax for Splunk 3.1 - 29th August 2022
+============================================
+- Add support for jQuery 3.5
+- Mark UI Dashboards as sample dashboards to be used as templates
+  by users to build out their own custom dashboards
+
 PowerMax for Splunk 3.0 - 15th February 2021
 ============================================
 - New categories have been added:
