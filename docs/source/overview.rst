@@ -30,6 +30,10 @@ for both code can be viewed and downloaded from the links below:
 - `Dell EMC PowerMax Add-on for Splunk Enterprise source`_
 - `Dell EMC PowerMax App for Splunk Enterprise source`_
 
+What's New in PowerMax for Splunk 3.2
+============================================
+- Remove install_source_checksum from default/data/app.conf
+- Add .readthedocs.yaml file required for building project on Read the Docs
 
 What's New in PowerMax for Splunk 3.1
 -------------------------------------

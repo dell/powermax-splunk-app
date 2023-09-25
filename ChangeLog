@@ -1,3 +1,9 @@
+PowerMax for Splunk 3.2 - 20th September 2023
+============================================
+- Remove install_source_checksum from default/data/app.conf
+- Add .readthedocs.yaml file required for building project on Read the Docs
+
+
 PowerMax for Splunk 3.1 - 29th August 2022
 ============================================
 - Add support for jQuery 3.5
